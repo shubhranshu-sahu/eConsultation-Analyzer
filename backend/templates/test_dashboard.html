@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Comment Analysis Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .comment-card {
+            border: 1px solid #dee2e6;
+            border-left-width: 5px;
+            transition: all 0.2s ease-in-out;
+            margin-bottom: 1.5rem;
+        }
+        
+        .comment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Border colors based on overall sentiment */
+        .border-positive { border-left-color: #198754; }
+        .border-negative { border-left-color: #dc3545; }
+        .border-neutral { border-left-color: #6c757d; }
+
+        .sentiment-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.3em 0.6em;
+        }
+        
+        .suggestion-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #ffc107 !important;
+            color: #000 !important;
+        }
+
+        .comment-text {
+            color: #495057;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .ai-summary {
+            font-style: italic;
+            color: #6c757d;
+            border-left: 3px solid #e9ecef;
+            padding-left: 1rem;
+            margin-top: 1rem;
+        }
+
+        .aspect-section {
+            border-top: 1px solid #e9ecef;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .aspect-tag {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .aspect-tag:hover {
+            opacity: 0.8;
+        }
+        
+        .modal-header {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container my-5">
+        <h1 class="mb-4">E-Consultation Analysis Dashboard</h1>
+        <p class="text-muted">Analysis of Public Comments for Public Notice XYZ</p>
+        
+        <!-- This is where the comment cards will be injected by JavaScript -->
+        <div id="comments-container" class="row">
+            <!-- JS will populate this area -->
+        </div>
+    </div>
+
+    <!-- Bootstrap Modal for displaying Aspect Context -->
+    <div class="modal fade" id="aspectModal" tabindex="-1" aria-labelledby="aspectModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aspectModalLabel">Aspect Context</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="mb-3">Official Text for: <strong id="aspect-key"></strong></h6>
+                    <p id="aspect-text" class="text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // --- Data Simulation ---
+        // In the real app, this data would come from your Flask backend's /analyze API endpoint.
+        const mockData = [
+            {
+                "CommentID": 1004,
+                "UserName": "Priya Reddy",
+                "OrganizationName": "AZB & Partners",
+                "Timestamp": "2025-10-01 09:48:22",
+                "CommentText": "While we agree with the principle behind Rule 11(2), the phrasing is unclear. The Ministry should clearly define 'activity of lending' to avoid future litigation.",
+                "analysis": {
+                    "Overall Sentiment": "Neutral",
+                    "Rule 11(2)": "Neutral"
+                },
+                "summary": "The user agrees with the rule's principle but suggests the Ministry should define 'activity of lending' to prevent future legal issues.",
+                "is_suggestion": true
+            },
+            {
+                "CommentID": 3045,
+                "UserName": "Arun Kumar",
+                "OrganizationName": "Indian Banks' Association",
+                "Timestamp": "2025-10-26 09:50:00",
+                "CommentText": "On behalf of the Indian Banks' Association, we wish to submit our detailed observations. While we appreciate the Ministry's objective, the current draft presents significant prudential and systemic risks. First, the principle of 'Risk Parity' is violated between NBFCs and IFSCA entities. Second, the broad definition of 'lending activities' in Rule 11(2)(b) could include high-risk products. Third, there is no periodic review mechanism. We strongly recommend deferring this notification.",
+                "analysis": {
+                    "Overall Sentiment": "Negative",
+                    "Rule 11(2)(b)": "Negative",
+                    "Risk": "Negative"
+                },
+                "summary": "The user, on behalf of the Indian Banks' Association, highlights significant risks regarding 'Risk Parity', the broad definition of 'lending activities', and the lack of a review mechanism, recommending the notification be deferred.",
+                "is_suggestion": true
+            },
+            {
+                "CommentID": 3002,
+                "UserName": "John Smith",
+                "OrganizationName": "Global Capital Investors",
+                "Timestamp": "2025-10-17 11:22:45",
+                "CommentText": "As a foreign investor, clarity is paramount. This amendment simplifies the investment structure for our subsidiary in the IFSC and is a very welcome development.",
+                "analysis": {
+                    "Overall Sentiment": "Positive"
+                },
+                "summary": "A foreign investor expresses support for the amendment, stating it simplifies investment structures in the IFSC.",
+                "is_suggestion": false
+            },
+             {
+                "CommentID": 1003,
+                "UserName": "Vikram Patel",
+                "OrganizationName": "",
+                "Timestamp": "2025-10-01 09:33:05",
+                "CommentText": "I have serious concerns about Rule 11(2). The risk profiles of IFSCA 'Finance Companies' are not identical to RBI-regulated NBFCs. This blanket exemption could create a regulatory loophole.",
+                "analysis": {
+                    "Overall Sentiment": "Negative",
+                    "Rule 11(2)": "Negative"
+                },
+                "summary": "The user expresses concerns that the different risk profiles of IFSCA and RBI-regulated entities could create a regulatory loophole.",
+                "is_suggestion": false
+            }
+        ];
+
+        // This simulates the structured data extracted from the notice PDF
+        const mockDocumentContext = {
+            "Rule 11(2)": "In the Companies (Meetings of Board and its Powers) Rules, 2014, in rule 11, in sub-rule (2) - (a) for the words 'shall include', the words, brackets and number 'shall include - (i)', shall be substituted; (b) after the words 'ordinary course of its business'...",
+            "Rule 11(2)(b)": "after the words 'ordinary course of its business', the words, brackets and number 'and (ii)- with regard to a Finance Company registered with the lnternational Financial Services Centres Authority, 'business of carrying out activity of lending...' shall be inserted.",
+            "Risk": "This is a custom-detected aspect. The official text might not have a direct mapping, but the AI identified it as a key theme."
+        };
+
+        // --- Helper Functions ---
+
+        /**
+         * Returns the appropriate Bootstrap CSS class for a sentiment.
+         * @param {string} sentiment - 'Positive', 'Negative', or 'Neutral'.
+         */
+        function getSentimentClasses(sentiment) {
+            switch (sentiment?.toLowerCase()) {
+                case 'positive':
+                    return { border: 'border-positive', bg: 'bg-success-subtle', text: 'text-success-emphasis' };
+                case 'negative':
+                    return { border: 'border-negative', bg: 'bg-danger-subtle', text: 'text-danger-emphasis' };
+                case 'neutral':
+                default:
+                    return { border: 'border-neutral', bg: 'bg-secondary-subtle', text: 'text-secondary-emphasis' };
+            }
+        }
+
+        /**
+         * Renders the list of aspects and their sentiments.
+         * @param {object} aspects - The aspect analysis object from the backend.
+         */
+        function renderAspects(aspects) {
+            // Exclude the 'Overall Sentiment' from the aspect list
+            const aspectKeys = Object.keys(aspects).filter(key => key !== 'Overall Sentiment');
+            if (aspectKeys.length === 0) return '';
+
+            let aspectsHtml = '<div class="aspect-section"><h6>Aspect-Based Analysis</h6>';
+            aspectKeys.forEach(key => {
+                const sentiment = aspects[key];
+                const classes = getSentimentClasses(sentiment);
+                // The data-aspect-key attribute is crucial for the modal interaction
+                aspectsHtml += `
+                    <p class="mb-1">
+                        <strong>${key}:</strong> 
+                        <span 
+                            class="badge rounded-pill sentiment-badge aspect-tag ${classes.bg} ${classes.text}" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#aspectModal" 
+                            data-aspect-key="${key}"
+                        >
+                            ${sentiment}
+                        </span>
+                    </p>
+                `;
+            });
+            aspectsHtml += '</div>';
+            return aspectsHtml;
+        }
+
+        // --- Main Rendering Logic ---
+
+        const commentsContainer = document.getElementById('comments-container');
+        
+        mockData.forEach(comment => {
+            const overallSentiment = comment.analysis['Overall Sentiment'];
+            const sentimentClasses = getSentimentClasses(overallSentiment);
+
+            const cardHtml = `
+                <div class="col-lg-6">
+                    <div class="card comment-card ${sentimentClasses.border}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="card-title mb-0">${comment.UserName}</h6>
+                                    <small class="text-muted">${comment.OrganizationName || 'Individual Commenter'}</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    ${comment.is_suggestion ? '<span class="badge rounded-pill suggestion-badge">💡 Suggestion</span>' : ''}
+                                    <span class="badge rounded-pill sentiment-badge ${sentimentClasses.bg} ${sentimentClasses.text}">${overallSentiment}</span>
+                                </div>
+                            </div>
+                            <p class="card-text comment-text mt-3">${comment.CommentText}</p>
+                            ${comment.summary ? `<p class="ai-summary"><strong>AI Summary:</strong> ${comment.summary}</p>` : ''}
+                            ${renderAspects(comment.analysis)}
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 text-end text-muted small">
+                           ID: ${comment.CommentID} | ${new Date(comment.Timestamp).toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+            `;
+            commentsContainer.innerHTML += cardHtml;
+        });
+
+        // --- Event Listener for Interactive Modal ---
+        const aspectModal = document.getElementById('aspectModal');
+        aspectModal.addEventListener('show.bs.modal', function (event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+            // Extract info from data-* attributes
+            const aspectKey = button.getAttribute('data-aspect-key');
+            
+            // Get the context text from our simulated document data
+            const aspectText = mockDocumentContext[aspectKey] || "No official text found for this auto-detected aspect.";
+
+            // Update the modal's content.
+            const modalTitle = aspectModal.querySelector('#aspect-key');
+            const modalBody = aspectModal.querySelector('#aspect-text');
+
+            modalTitle.textContent = aspectKey;
+            modalBody.textContent = aspectText;
+        });
+
+    </script>
+</body>
+</html>

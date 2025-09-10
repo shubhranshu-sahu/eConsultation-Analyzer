@@ -1,8 +1,8 @@
 # Import your SentimentAnalyzer class
 
-# from sentiment_analyzer import SentimentAnalyzer #--------------Modified-----------------------------------------------------------------
+from sentiment_analyzer import SentimentAnalyzer #--------------Modified-----------------------------------------------------------------
 
-from ensemble_analyzer import EnsembleSentimentAnalyzer
+# from ensemble_analyzer import EnsembleSentimentAnalyzer
 
 
 # The list of 50 test cases from above
@@ -67,8 +67,8 @@ def run_test():
     """
     print("--- Starting Model Accuracy Test ---")
     
-    # analyzer = SentimentAnalyzer() #--------------Modified-----------------------------------------------------------------
-    analyzer = EnsembleSentimentAnalyzer()
+    analyzer = SentimentAnalyzer() #--------------Modified-----------------------------------------------------------------
+    # analyzer = EnsembleSentimentAnalyzer()
 
 
     correct_predictions = 0
@@ -81,8 +81,8 @@ def run_test():
         
         # Get the model's prediction
         result = analyzer.analyze(comment)
-        # predicted_sentiment = result.get("top_sentiment", "Error") #--------------Modified-----------------------------------------------------------------
-        predicted_sentiment = result.get("final_sentiment", "Error")
+        predicted_sentiment = result.get("top_sentiment", "Error") #--------------Modified-----------------------------------------------------------------
+        # predicted_sentiment = result.get("final_sentiment", "Error")
 
         # Compare and log the outcome
         is_correct = (predicted_sentiment == true_sentiment)
@@ -94,8 +94,8 @@ def run_test():
         print(f"   - Comment: '{comment[:60]}...'")
         print(f"   - True: {true_sentiment}, Predicted: {predicted_sentiment}")
         if not is_correct:
-            # print(f"   - Full Model Output: {result.get('all_scores')}")  #--------------Modified-----------------------------------------------------------------
-            print(f"   - Specialist: {result.get('specialist_prediction')}, Generalist: {result.get('generalist_prediction')}")
+            print(f"   - Full Model Output: {result.get('all_scores')}")  #--------------Modified-----------------------------------------------------------------
+            # print(f"   - Specialist: {result.get('specialist_prediction')}, Generalist: {result.get('generalist_prediction')}")
         
         print("-" * 20)
 
