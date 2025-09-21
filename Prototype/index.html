@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Insight Engine - Interactive Prototype</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <style>
+        /* General Body & Theme Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* A slightly softer background */
+            color: #212529;
+        }
+
+        /* --- STAGE 1: LANDING PAGE --- */
+        #landing-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #0d6efd;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #6c757d;
+            margin-bottom: 2.5rem;
+        }
+        .upload-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+        .upload-box {
+            border: 2px dashed #ced4da;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            width: 280px;
+            background-color: #fff;
+        }
+        .upload-box:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+            transform: translateY(-5px);
+        }
+        .upload-box.uploaded {
+             border-color: #198754;
+             border-style: solid;
+        }
+        .upload-box svg {
+            width: 40px; height: 40px; margin-bottom: 1rem; color: #6c757d;
+        }
+        .upload-box-title { font-weight: 600; color: #495057; }
+        .upload-box-filename { font-size: 0.8rem; color: #0d6efd; margin-top: 0.5rem; word-break: break-all; }
+        .btn-analyze {
+            font-size: 1.2rem; padding: 0.75rem 2.5rem; border-radius: 50px;
+        }
+
+        /* --- STAGE 2: LOADING SPINNER --- */
+        #loading-screen {
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .spinner-border { width: 4rem; height: 4rem; color: #0d6efd; }
+        .loading-text { margin-top: 1.5rem; font-size: 1.2rem; font-weight: 500; color: #495057; }
+
+        /* --- STAGE 3: DASHBOARD --- */
+        #dashboard {
+            display: none; /* Initially hidden */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dashboard-header {
+            background-color: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 2rem;
+        }
+
+        /* Card Styles */
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            height: 100%; /* For flex alignment */
+        }
+        
+        /* KPI Card Specifics */
+        .kpi-card { text-align: center; }
+        .kpi-title { font-size: 0.9rem; color: #6c757d; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 600; }
+        .kpi-value { font-size: 2.5rem; font-weight: 700; color: #0d6efd; }
+        .kpi-sub-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .kpi-sub-stats span { font-weight: 600; }
+        .text-positive { color: #198754; }
+        .text-negative { color: #dc3545; }
+        .text-neutral { color: #6c757d; }
+
+        /* Chart Card Styles */
+        .chart-container { min-height: 300px; }
+
+        /* Comment Card Specifics */
+        #comment-feed {
+            max-height: 120vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        .comment-card {
+            background-color: #fff;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 5px solid #ced4da;
+        }
+        .comment-card.Positive { border-left-color: #198754; }
+        .comment-card.Negative { border-left-color: #dc3545; }
+        .comment-card.Neutral { border-left-color: #6c757d; }
+        .comment-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .comment-user { font-weight: 600; }
+        .comment-org { font-size: 0.9rem; color: #6c757d; }
+        .comment-badges { display: flex; gap: 0.5rem; }
+        .sentiment-badge { font-size: 0.75rem; font-weight: 600; }
+        .suggestion-badge { background-color: #ffc107 !important; color: #000 !important; }
+        .comment-summary { font-style: italic; color: #495057; margin-bottom: 1rem; border-left: 3px solid #e9ecef; padding-left: 1rem; }
+        .absa-results { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef; }
+        .absa-title { font-size: 0.8rem; font-weight: 600; color: #6c757d; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .absa-tag { cursor: pointer; transition: background-color 0.2s; }
+        .absa-tag:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <!-- STAGE 1: LANDING PAGE -->
+    <div id="landing-page">
+        <h1 class="logo">Public Insight Engine</h1>
+        <p class="subtitle">Transforming Public Feedback into Policy Intelligence</p>
+
+        <div class="upload-area">
+            <label for="pdf-upload" class="upload-box" id="pdf-upload-box">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                <span class="upload-box-title">Upload Notice PDF</span>
+                <div class="upload-box-filename" id="pdf-filename"></div>
+            </label>
+            <input type="file" id="pdf-upload" class="d-none" accept=".pdf">
+
+            <label for="csv-upload" class="upload-box" id="csv-upload-box">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h1.5v-1.5M3.375 19.5v-1.5a1.125 1.125 0 0 1 1.125-1.125M1.5 15.75v-1.5a1.125 1.125 0 0 1 1.125-1.125M1.5 15.75h1.5v-1.5M1.5 15.75v1.5a1.125 1.125 0 0 1-1.125 1.125m18.375-3.375v1.5a1.125 1.125 0 0 1-1.125 1.125m1.125-1.125h-1.5v1.5m1.125-1.125v-1.5a1.125 1.125 0 0 0-1.125-1.125m-17.25 0h1.5v1.5m-1.5 0v-1.5a1.125 1.125 0 0 1 1.125-1.125m0 17.25v-1.5a1.125 1.125 0 0 0-1.125-1.125M3.375 4.5v-1.5a1.125 1.125 0 0 1 1.125-1.125M3.375 4.5h1.5v-1.5m-1.5 0V3.375c0-.621.504-1.125 1.125-1.125m17.25 1.125v1.5a1.125 1.125 0 0 1-1.125-1.125m1.125-1.125h-1.5v1.5m-1.5-1.5V3.375c0-.621-.504-1.125-1.125-1.125m-1.5 17.25h-1.5v-1.5m0 1.5v-1.5a1.125 1.125 0 0 0-1.125-1.125M9 9.375h6.75M9 12.75h6.75M9 16.125h6.75M12 21v-8.25a4.5 4.5 0 0 0-4.5-4.5H7.5a4.5 4.5 0 0 0-4.5 4.5v8.25" /></svg>
+                <span class="upload-box-title">Upload Comments CSV</span>
+                <div class="upload-box-filename" id="csv-filename"></div>
+            </label>
+            <input type="file" id="csv-upload" class="d-none" accept=".csv">
+        </div>
+
+        <button id="start-analysis-btn" class="btn btn-primary btn-lg btn-analyze" disabled>Start Analysis</button>
+    </div>
+    
+    <!-- STAGE 2: LOADING SCREEN -->
+    <div id="loading-screen">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+        <p class="loading-text" id="loading-status">Analyzing comments...</p>
+    </div>
+
+    <!-- STAGE 3: DASHBOARD -->
+    <main id="dashboard" class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="h3">Public Insight Engine: <span class="text-primary fw-bold">Analysis for Public Notice June 2025</span></h1>
+        </div>
+
+        <div class="px-2">
+            <!-- Row 1: KPI Cards -->
+            <div class="row g-4 mb-4">
+                <!-- Total Comments Card -->
+                <div class="col-xl-4 col-md-6">
+                    <div class="card kpi-card">
+                        <div class="card-body">
+                            <h5 class="kpi-title">Total Comments</h5>
+                            <p class="kpi-value" id="total-comments">0</p>
+                            <div class="kpi-sub-stats">
+                                <div><span class="text-positive" id="positive-count">0</span> Positive</div>
+                                <div><span class="text-negative" id="negative-count">0</span> Negative</div>
+                                <div><span class="text-neutral" id="neutral-count">0</span> Neutral</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Suggestions Found Card -->
+                <div class="col-xl-4 col-md-6">
+                     <div class="card kpi-card">
+                        <div class="card-body">
+                            <h5 class="kpi-title">💡 Suggestions Found</h5>
+                            <p class="kpi-value" id="suggestions-found">0</p>
+                            <div class="kpi-sub-stats">
+                                High-quality recommendations identified
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Coordinated Campaigns Card -->
+                 <div class="col-xl-4 col-md-6">
+                     <div class="card kpi-card">
+                        <div class="card-body">
+                            <h5 class="kpi-title">Coordinated Campaigns</h5>
+                            <p class="kpi-value" id="campaigns-detected">0</p>
+                             <div class="kpi-sub-stats">
+                                Near-duplicate clusters found
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Charts -->
+            <div class="row g-4 mb-4">
+                <!-- Sentiment Pie Chart -->
+                <div class="col-lg-5">
+                    <div class="card">
+                        <div class="card-body">
+                             <h5 class="card-title">Overall Sentiment Distribution</h5>
+                             <div class="chart-container">
+                                <canvas id="sentiment-pie-chart"></canvas>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Temporal Analysis Line Chart -->
+                <div class="col-lg-7">
+                     <div class="card">
+                        <div class="card-body">
+                             <h5 class="card-title">Sentiment Trends Over Time</h5>
+                             <div class="chart-container">
+                                <canvas id="temporal-line-chart"></canvas>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Word Cloud & Filters -->
+            <div class="row g-4 mb-4">
+                <!-- Interactive Word Cloud -->
+                <div class="col-lg-7">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Interactive Keyword Cloud</h5>
+                            <p class="card-subtitle mb-2 text-muted small">Click a word to filter comments</p>
+                            <div id="wordCloud" style="height: 300px; width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Filters -->
+                <div class="col-lg-5">
+                     <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Filter & Explore</h5>
+                            <!-- Sentiment Filter -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">By Sentiment</label>
+                                <div class="btn-group w-100" role="group" id="sentiment-filter">
+                                    <button type="button" class="btn btn-outline-primary active" data-filter="All">All</button>
+                                    <button type="button" class="btn btn-outline-success" data-filter="Positive">Positive</button>
+                                    <button type="button" class="btn btn-outline-danger" data-filter="Negative">Negative</button>
+                                    <button type="button" class="btn btn-outline-secondary" data-filter="Neutral">Neutral</button>
+                                </div>
+                            </div>
+                            <!-- Other Filters -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">By Content</label>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="suggestion-filter">
+                                    <label class="form-check-label" for="suggestion-filter">Show Only Suggestions 💡</label>
+                                </div>
+                            </div>
+                            <!-- Stakeholder Filter -->
+                             <div>
+                                <label for="stakeholder-filter" class="form-label fw-bold">By Stakeholder Role</label>
+                                <select class="form-select" id="stakeholder-filter">
+                                    <option selected value="All">All Stakeholders</option>
+                                    <!-- Options will be populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 4: Q&A Module and Other Features (Placeholders) -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                     <div class="card">
+                        <div class="card-body text-center text-muted">
+                            <h5 class="card-title">Conversational Q&A Engine</h5>
+                            <p>This area will contain the interactive chat module to "talk to your data".</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="col-12">
+                     <div class="card">
+                        <div class="card-body text-center text-muted">
+                            <h5 class="card-title">Argument Intelligence & Redlining Report</h5>
+                             <p>This area will show argument quality scores and provide a download for the auto-generated redlined draft.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Row 5: Comment Feed Header -->
+             <div class="row mt-4">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                     <h3 class="h4">Detailed Feedback Analysis</h3>
+                     <p class="text-muted mb-0"><span id="filtered-comment-count">0</span> of 160 comments shown</p>
+                </div>
+             </div>
+             <hr/>
+
+             <!-- Row 6: Thematic Summaries & Comment Feed -->
+             <div class="row g-4">
+                <!-- Thematic Summaries (Left Sidebar) -->
+                <div class="col-lg-4">
+                     <div class="card">
+                        <div class="card-body">
+                             <h5 class="card-title">Thematic Summaries</h5>
+                             <p class="card-subtitle mb-2 text-muted small">Click a legal clause to see its summary and filter comments.</p>
+                             <div class="list-group" id="thematic-summaries">
+                                 <!-- JS will populate this -->
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Comment Feed (Right) -->
+                 <div class="col-lg-8">
+                     <div id="comment-feed">
+                        <!-- JS will dynamically generate comment cards here -->
+                     </div>
+                 </div>
+             </div>
+        </div>
+    </main>
+
+    <!-- Aspect Detail Modal -->
+    <div class="modal fade" id="aspectModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aspectModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="aspectModalBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- D3.js and D3-Cloud -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jasondavies/d3-cloud@v1.2.7/build/d3.layout.cloud.js"></script>
+
+    <!-- Main Application Logic -->
+    <script>
+        // --- MOCK DATA GENERATION ---
+        // This simulates the JSON your backend will generate, using the full dummy.csv.
+        const mockData = {
+            "overviewStats": {
+                "totalComments": 160,
+                "sentimentDistribution": { "Positive": 55, "Negative": 58, "Neutral": 47 },
+                "suggestionsFound": 44,
+                "campaignsDetected": 2 
+            },
+            "wordCloudData": [
+                { "text": "Rule 11(2)", "value": 98 }, { "text": "exemption", "value": 90 },
+                { "text": "risk", "value": 85 }, { "text": "IFSCA", "value": 82 },
+                { "text": "amendment", "value": 78 }, { "text": "companies", "value": 75 },
+                { "text": "financial", "value": 72 }, { "text": "business", "value": 68 },
+                { "text": "oversight", "value": 65 }, { "text": "stability", "value": 60 }
+            ],
+            "parsedDocument": {
+                "Rule 11(2)": "In the Companies (Meetings of Board and its Powers) Rules, 2014, in rule 11, in sub-rule (2) - (a) for the words 'shall include', the words, brackets and number 'shall include - (i)', shall be substituted; (b) after the words 'ordinary course of its business', the words, brackets and number 'and (ii) with regard to a Finance Company...' shall be inserted.",
+                "Rule 11(2)(a)": "for the words 'shall include', the words, brackets and number 'shall include - (i)', shall be substituted;",
+                "Rule 11(2)(b)": "after the words 'ordinary course of its business', the words, brackets and number 'and (ii) with regard to a Finance Company registered with the International Financial Services Centres Authority...' shall be inserted."
+            },
+            "thematicSummaries": {
+                 "Rule 11(2)": "Feedback on Rule 11(2) is highly polarized. Supporters view it as a crucial step for the ease of doing business in the IFSC, while critics express significant concern over systemic risks from reduced RBI oversight.",
+                "Rule 11(2)(b)": "Comments on this sub-clause primarily focus on a need for clearer definitions of terms like 'Finance Company' and 'lending activities' to prevent legal ambiguity and potential litigation."
+            },
+            "temporalData": {
+                "labels": ["Oct 1", "Oct 5", "Oct 8", "Oct 12", "Oct 15", "Oct 18", "Oct 22", "Oct 25", "Oct 28", "Oct 31"],
+                "positive": [3, 2, 0, 1, 1, 2, 1, 6, 21, 18],
+                "negative": [2, 1, 1, 2, 0, 3, 1, 9, 21, 18],
+                "neutral": [4, 1, 1, 2, 1, 0, 2, 4, 1, 31],
+                "suggestions": [3, 0, 1, 1, 0, 1, 0, 4, 1, 22]
+            },
+            "comments": [
+                // Populated from dummy.csv
+                {"CommentID":1001,"UserID":"USER_482","Timestamp":"2025-10-01 09:12","CommentText":"This is a much-needed amendment for IFSCA companies. It creates a level playing field and boosts the ease of doing business. We are in full support.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Aarav Singh","UserRole":"Professional","OrganizationName":"Fintech Association of India","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":1002,"UserID":"USER_731","Timestamp":"2025-10-01 09:25","CommentText":"Excellent clarification regarding Rule 11(2). This will benefit many NBFCs and is a positive step forward.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Aditi Sharma","UserRole":"Director/Designated Partner","OrganizationName":"ABC Capital Pvt. Ltd.","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":1003,"UserID":"USER_239","Timestamp":"2025-10-01 09:33","CommentText":"I have serious concerns about Rule 11(2). The risk profiles of IFSCA 'Finance Companies' are not identical to RBI-regulated NBFCs. This blanket exemption could create a regulatory loophole.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Vikram Patel","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":1004,"UserID":"USER_556","Timestamp":"2025-10-01 09:48","CommentText":"While we agree with the principle behind Rule 11(2), the phrasing is unclear. The Ministry should clearly define 'activity of lending' to avoid future litigation.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Priya Reddy","UserRole":"Professional","OrganizationName":"AZB & Partners","single_value":"Neutral","multi_value":"{\"Rule 11(2)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":1005,"UserID":"USER_812","Timestamp":"2025-10-01 10:01","CommentText":"This entire proposal seems designed to benefit only a small subset of large corporations and is detrimental to smaller, domestic NBFCs.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Rohan Gupta","UserRole":"Student","OrganizationName":"IIM Bangalore","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":1006,"UserID":"USER_111","Timestamp":"2025-10-01 10:15","CommentText":"We request clarification on the applicability of Rule 11(2)(b) to foreign subsidiaries. The language is currently ambiguous.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Ananya Joshi","UserRole":"Professional Staff Member","OrganizationName":"Shardul Amarchand Mangaldas & Co","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":1007,"UserID":"USER_642","Timestamp":"2025-10-01 10:29","CommentText":"A commendable and forward-thinking initiative by the Ministry. The economic benefits for the IFSC are clear.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Siddharth Kumar","UserRole":"Company/LLP","OrganizationName":"XYZ Investments LLP","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":1008,"UserID":"USER_305","Timestamp":"2025-10-01 10:43","CommentText":"The justification provided in the notice is weak and unconvincing. The potential for misuse of this exemption is alarmingly high.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Neha Desai","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":1009,"UserID":"USER_921","Timestamp":"2025-10-01 10:58","CommentText":"Instead of a blanket exemption, a better approach would be to introduce a phased rollout for IFSCA companies, subject to an annual review by a joint committee of MCA and RBI.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arjun Mehta","UserRole":"Researcher","OrganizationName":"NIPFP","single_value":"Neutral","multi_value":"{\"IFSCA\": \"Neutral\"}","suggestion":true},
+                {"CommentID":1010,"UserID":"USER_488","Timestamp":"2025-10-01 11:11","CommentText":"It is noted that this rule is an amendment to the Companies (Meetings of Board and its Powers) Rules, 2014, specifically Rule 11(2).","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Ishaan Verma","UserRole":"Student","OrganizationName":"NLSIU Bangalore","single_value":"Neutral","multi_value":"{\"Rule 11(2)\": \"Neutral\"}","suggestion":false},
+                {"CommentID":1011,"UserID":"USER_713","Timestamp":"2025-10-01 11:26","CommentText":"Weakening oversight on loan and guarantee provisions is a mistake. We strongly oppose this change to Rule 11(2) as it compromises financial stability.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Kavya Nair","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\"}","suggestion":false},
+                {"CommentID":1012,"UserID":"USER_250","Timestamp":"2025-10-01 11:40","CommentText":"The draft for Rule 11(2)(a) is fine, but for Rule 11(2)(b), we recommend adding a monetary cap on the loans to mitigate potential risks.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Sameer Ali","UserRole":"Professional","OrganizationName":"Crisil","single_value":"Neutral","multi_value":"{\"Rule 11(2)(a)\": \"Positive\", \"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":1013,"UserID":"USER_599","Timestamp":"2025-10-01 11:55","CommentText":"We are in agreement with the overall goal. Aligning the rules for IFSCA entities with RBI-registered NBFCs is logical and will attract more foreign investment.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Diya Malhotra","UserRole":"Manager/Secretary/Authorized Representative","OrganizationName":"India INX","single_value":"Positive","multi_value":"{\"IFSCA\": \"Positive\", \"NBFCs\": \"Positive\"}","suggestion":false},
+                {"CommentID":1014,"UserID":"USER_834","Timestamp":"2025-10-01 12:10","CommentText":"Could the Ministry provide the impact assessment data that informed this proposal regarding the differential risk between IFSCA and domestic NBFCs?","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Tanvi Shah","UserRole":"Researcher","OrganizationName":"IIT Bombay","single_value":"Neutral","multi_value":"{\"IFSCA\": \"Neutral\", \"NBFCs\": \"Neutral\"}","suggestion":false},
+                {"CommentID":1015,"UserID":"USER_124","Timestamp":"2025-10-01 12:24","CommentText":"To improve this draft, we suggest that a certificate from the auditor, as mentioned, should be submitted to the RoC on an annual basis to ensure ongoing compliance.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Rajat Kapoor","UserRole":"Director/Designated Partner","OrganizationName":"SKV & Associates","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":1016,"UserID":"USER_677","Timestamp":"2025-10-01 12:39","CommentText":"The deadline of July 17th is too short for stakeholders to provide a meaningful response, especially on such a technical matter. We request an extension.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aisha Khan","UserRole":"Professional","OrganizationName":"Confederation of Indian Industry (CII)","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":1017,"UserID":"USER_318","Timestamp":"2025-10-01 12:53","CommentText":"Fully support this. It's a progressive step.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Mohit Agarwal","UserRole":"Individual","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":1018,"UserID":"USER_953","Timestamp":"2025-10-01 13:08","CommentText":"This is a terrible idea. It creates a special class of companies that are above the standard rules of scrutiny.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Suresh Reddy","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":1019,"UserID":"USER_409","Timestamp":"2025-10-01 13:22","CommentText":"The proposed amendment to Rule 11(2)(a) is a simple substitution and we have no objections to it.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(a)","CommentCategory":"In agreement","UserName":"Advait Nair","UserRole":"Professional","OrganizationName":"Trilegal","single_value":"Positive","multi_value":"{\"Rule 11(2)(a)\": \"Positive\"}","suggestion":false},
+                {"CommentID":1020,"UserID":"USER_281","Timestamp":"2025-10-01 13:37","CommentText":"The change is welcome, however, the term 'Finance Company' needs a more robust definition in the final notification to prevent ambiguity.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Zara Hussain","UserRole":"Professional Staff Member","OrganizationName":"Khaitan & Co","single_value":"Neutral","multi_value":"{\"Rule 11(2)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2981,"UserID":"USER_482","Timestamp":"2025-10-31 16:10","CommentText":"As the consultation period ends, we reiterate our strong support for this amendment. It is a vital step for the growth of the IFSC and the Indian economy as a whole.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Aarav Singh","UserRole":"Professional","OrganizationName":"Fintech Association of India","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":2982,"UserID":"USER_731","Timestamp":"2025-10-31 16:15","CommentText":"Final submission: The clarification to Rule 11(2) is crucial. We urge the Ministry to proceed with this amendment without delay.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Aditi Sharma","UserRole":"Director/Designated Partner","OrganizationName":"ABC Capital Pvt. Ltd.","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":2983,"UserID":"USER_239","Timestamp":"2025-10-31 16:20","CommentText":"Our final stance remains one of strong opposition. The risks associated with this exemption for IFSCA entities have not been adequately addressed by the Ministry.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Vikram Patel","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":2984,"UserID":"USER_556","Timestamp":"2025-10-31 16:25","CommentText":"In summary, we believe the principle is sound but the execution is flawed. Our primary suggestion is to redraft Rule 11(2)(b) with clearer definitions to avoid future legal challenges.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Priya Reddy","UserRole":"Professional","OrganizationName":"AZB & Partners","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2985,"UserID":"USER_812","Timestamp":"2025-10-31 16:30","CommentText":"This notice disproportionately benefits large corporations. The final rules must include safeguards for smaller NBFCs to ensure fair competition.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Rohan Gupta","UserRole":"Student","OrganizationName":"IIM Bangalore","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":true},
+                {"CommentID":2986,"UserID":"USER_111","Timestamp":"2025-10-31 16:35","CommentText":"We hope the Ministry will consider our request for clarification on the applicability of Rule 11(2)(b) to foreign-owned subsidiaries before finalizing the notification.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Ananya Joshi","UserRole":"Professional Staff Member","OrganizationName":"Shardul Amarchand Mangaldas & Co","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2987,"UserID":"USER_642","Timestamp":"2025-10-31 16:40","CommentText":"We are optimistic about the positive impact this will have on investment in the IFSC. A great initiative.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Siddharth Kumar","UserRole":"Company/LLP","OrganizationName":"XYZ Investments LLP","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":2988,"UserID":"USER_305","Timestamp":"2025-10-31 16:45","CommentText":"The potential for misuse of this exemption remains our biggest concern. The final rules must address this directly.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Neha Desai","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":2989,"UserID":"USER_921","Timestamp":"2025-10-31 16:50","CommentText":"Our recommendation for a phased rollout of this exemption for IFSCA companies is the most prudent path forward.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arjun Mehta","UserRole":"Researcher","OrganizationName":"NIPFP","single_value":"Neutral","multi_value":"{\"IFSCA\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2990,"UserID":"USER_488","Timestamp":"2025-10-31 16:55","CommentText":"Thank you for the opportunity to comment. We look forward to seeing the final version of the amendment to Rule 11(2).","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Ishaan Verma","UserRole":"Student","OrganizationName":"NLSIU Bangalore","single_value":"Neutral","multi_value":"{\"Rule 11(2)\": \"Neutral\"}","suggestion":false},
+                {"CommentID":2991,"UserID":"USER_713","Timestamp":"2025-10-31 16:56","CommentText":"We maintain our position that this weakens financial stability. This change to Rule 11(2) is not advisable.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Kavya Nair","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\"}","suggestion":false},
+                {"CommentID":2992,"UserID":"USER_250","Timestamp":"2025-10-31 16:57","CommentText":"The addition of a monetary cap on loans under Rule 11(2)(b) is our primary recommendation for the final draft.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Sameer Ali","UserRole":"Professional","OrganizationName":"Crisil","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2993,"UserID":"USER_599","Timestamp":"2025-10-31 16:57","CommentText":"We fully support this move and believe it will attract significant foreign investment to India's IFSC.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Diya Malhotra","UserRole":"Manager/Secretary/Authorized Representative","OrganizationName":"India INX","single_value":"Positive","multi_value":"{\"IFSCA\": \"Positive\", \"NBFCs\": \"Positive\"}","suggestion":false},
+                {"CommentID":2994,"UserID":"USER_834","Timestamp":"2025-10-31 16:58","CommentText":"We urge the MCA to release the impact assessment data before finalizing this rule change.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Tanvi Shah","UserRole":"Researcher","OrganizationName":"IIT Bombay","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2995,"UserID":"USER_124","Timestamp":"2025-10-31 16:58","CommentText":"Our suggestion to mandate annual submission of the auditor's certificate is crucial for ensuring long-term compliance.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Rajat Kapoor","UserRole":"Director/Designated Partner","OrganizationName":"SKV & Associates","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2996,"UserID":"USER_677","Timestamp":"2025-10-31 16:59","CommentText":"We hope our request for a deadline extension will be considered for future consultations to allow for more thorough feedback.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aisha Khan","UserRole":"Professional","OrganizationName":"Confederation of Indian Industry (CII)","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":2997,"UserID":"USER_318","Timestamp":"2025-10-31 16:59","CommentText":"A great initiative overall.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Mohit Agarwal","UserRole":"Individual","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":2998,"UserID":"USER_953","Timestamp":"2025-10-31 16:59","CommentText":"This is simply not a good policy for the country.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Suresh Reddy","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":2999,"UserID":"USER_409","Timestamp":"2025-10-31 16:59","CommentText":"We have no objections to the final text of Rule 11(2)(a).","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(a)","CommentCategory":"In agreement","UserName":"Advait Nair","UserRole":"Professional","OrganizationName":"Trilegal","single_value":"Positive","multi_value":"{\"Rule 11(2)(a)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3000,"UserID":"USER_281","Timestamp":"2025-10-31 16:59","CommentText":"Final thoughts: the definition of 'Finance Company' must be tightened in the final notification. It is the most critical point of ambiguity.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Zara Hussain","UserRole":"Professional Staff Member","OrganizationName":"Khaitan & Co","single_value":"Neutral","multi_value":"{\"Rule 11(2)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3001,"UserID":"USER_101","Timestamp":"2025-10-17 10:05","CommentText":"The requirement for an auditor's certificate is sound, but the MCA should specify the exact format and required disclosures (e.g., UDIN mandatory?). This will prevent confusion and ensure uniform compliance.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Manoj Gupta","UserRole":"Professional","OrganizationName":"The Institute of Chartered Accountants of India (ICAI)","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3002,"UserID":"USER_102","Timestamp":"2025-10-17 11:22","CommentText":"As a foreign investor, clarity is paramount. This amendment simplifies the investment structure for our subsidiary in the IFSC and is a very welcome development.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"John Smith","UserRole":"Director/Designated Partner","OrganizationName":"Global Capital Investors","single_value":"Positive","multi_value":"{\"IFSCA\": \"Positive\"}","suggestion":false},
+                {"CommentID":3003,"UserID":"USER_103","Timestamp":"2025-10-17 14:30","CommentText":"Does this amendment have any retrospective effect on loans already disbursed by IFSCA Finance Companies? The notification is silent on this crucial point.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aditi Rao","UserRole":"Researcher","OrganizationName":"Vidhi Centre for Legal Policy","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":false},
+                {"CommentID":3004,"UserID":"USER_104","Timestamp":"2025-10-18 09:55","CommentText":"This is a blatant attempt to create a tax haven-like environment within the IFSC, with reduced oversight. I strongly object to this.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sanjay Tiwari","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"IFSCA\": \"Negative\", \"Oversight\": \"Negative\"}","suggestion":false},
+                {"CommentID":3005,"UserID":"USER_105","Timestamp":"2025-10-18 10:18","CommentText":"The operational impact of this change on our internal accounting and compliance software will be significant. We support the move but request a 6-month transition period after notification.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Priya Singh","UserRole":"Company/LLP","OrganizationName":"TechFin Solutions Ltd.","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3006,"UserID":"USER_106","Timestamp":"2025-10-18 11:40","CommentText":"The comparison to RBI-regulated NBFCs is flawed. The capital adequacy and prudential norms are vastly different. This amendment ignores that fundamental reality.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ravi Shankar","UserRole":"Professional","OrganizationName":"CRISIL","single_value":"Negative","multi_value":"{\"NBFCs\": \"Negative\", \"IFSCA\": \"Negative\"}","suggestion":false},
+                {"CommentID":3007,"UserID":"USER_107","Timestamp":"2025-10-18 15:05","CommentText":"So we are just creating more rules to help big companies avoid scrutiny? This is not what the Companies Act was intended for.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Anjali Sharma","UserRole":"Student","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":3008,"UserID":"USER_108","Timestamp":"2025-10-19 10:11","CommentText":"The text in Rule 11(2)(b) is a direct copy from the IFSCA regulations. This consistency is appreciated and reduces legal ambiguity.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"In agreement","UserName":"Varun Desai","UserRole":"Professional Staff Member","OrganizationName":"Cyril Amarchand Mangaldas","single_value":"Positive","multi_value":"{\"Rule 11(2)(b)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3009,"UserID":"USER_109","Timestamp":"2025-10-19 12:25","CommentText":"A better idea would be to raise the overall lending limits for all companies, not create special exemptions for a select few. This proposal is inequitable.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arun Kumar","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":true},
+                {"CommentID":3010,"UserID":"USER_110","Timestamp":"2025-10-19 16:45","CommentText":"This amendment might be legally challenged on the grounds of creating an arbitrary classification between different types of financial institutions. The Ministry should provide a stronger legal justification.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Meera Krishnan","UserRole":"Professional","OrganizationName":"J. Sagar Associates","single_value":"Neutral","multi_value":"{\"Document Level\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3011,"UserID":"USER_111","Timestamp":"2025-10-20 09:33","CommentText":"The business rationale is clear and sound. We fully endorse this amendment.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Rahul Verma","UserRole":"Businessperson","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3012,"UserID":"USER_112","Timestamp":"2025-10-20 11:50","CommentText":"The term 'Global or Regional Corporate Treasury Centre' in Rule 11(2)(b) is too broad. We recommend that the MCA provide specific guidelines or a circular defining the scope of this term.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Suresh Iyer","UserRole":"Professional","OrganizationName":"Deloitte India","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3013,"UserID":"USER_113","Timestamp":"2025-10-20 15:15","CommentText":"This proposal seems to only address the concerns of lenders. What about the protection of borrowers and depositors? This aspect is completely ignored.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Priya David","UserRole":"Researcher","OrganizationName":"Centre for Financial Accountability","single_value":"Negative","multi_value":"{\"Borrower Protection\": \"Negative\"}","suggestion":false},
+                {"CommentID":3014,"UserID":"USER_114","Timestamp":"2025-10-21 10:20","CommentText":"This is simply a good, common-sense change that brings regulations in line with the reality of how global finance operates. I support it.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Vikram Singh","UserRole":"Manager/Secretary/Authorized Representative","OrganizationName":"Global Fund Services","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3015,"UserID":"USER_115","Timestamp":"2025-10-21 14:40","CommentText":"The document does not provide any data on the number of 'Finance Companies' in the IFSC that will be impacted. How can we comment without this basic information?","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aditya Kumar","UserRole":"Student","OrganizationName":"Delhi School of Economics","single_value":"Neutral","multi_value":"{\"Data\": \"Negative\"}","suggestion":false},
+                {"CommentID":3016,"UserID":"USER_116","Timestamp":"2025-10-22 11:10","CommentText":"This amendment will have a significant positive effect on the valuation of companies operating within the IFSC. A well-timed and strategic move by the government.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Neha Kapoor","UserRole":"Professional","OrganizationName":"Morgan Stanley India","single_value":"Positive","multi_value":"{\"IFSCA\": \"Positive\", \"Valuation\": \"Positive\"}","suggestion":false},
+                {"CommentID":3017,"UserID":"USER_117","Timestamp":"2025-10-22 16:00","CommentText":"The change is fine, but the process of amending these rules is too slow. The MCA should have a faster track for such minor, logical changes.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Rajiv Mathur","UserRole":"Director/Designated Partner","OrganizationName":"FastTrack Consultants LLP","single_value":"Neutral","multi_value":"{\"Process\": \"Negative\"}","suggestion":true},
+                {"CommentID":3018,"UserID":"USER_118","Timestamp":"2025-10-23 10:05","CommentText":"I fail to see the urgency for this amendment. This seems to be a solution in search of a problem.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sunil Agarwal","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":3019,"UserID":"USER_119","Timestamp":"2025-10-23 15:25","CommentText":"We are in agreement with the proposed substitution in Rule 11(2)(a). It is a necessary technical correction.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(a)","CommentCategory":"In agreement","UserName":"Anjali Mehta","UserRole":"Professional Staff Member","OrganizationName":"Luthra & Luthra Law Offices","single_value":"Positive","multi_value":"{\"Rule 11(2)(a)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3020,"UserID":"USER_120","Timestamp":"2025-10-24 12:00","CommentText":"While the goal is 'ease of doing business', the ultimate result will be a 'race to the bottom' in regulatory standards. This is a dangerous path.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ravi Chandran","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Regulatory Standards\": \"Negative\"}","suggestion":false},
+                {"CommentID":3021,"UserID":"USER_201","Timestamp":"2025-10-25 09:15","CommentText":"Our analysis indicates that this amendment, while well-intentioned, could be challenged under Article 14 of the Constitution. By creating a special class of 'Finance Companies' within the IFSC and granting them exemptions not available to similarly situated domestic NBFCs, it may be seen as creating an arbitrary and unreasonable classification without a clear nexus to the objective. We recommend the Ministry publish a detailed legal opinion on this matter to pre-empt potential litigation.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Meera Krishnan","UserRole":"Professional","OrganizationName":"J. Sagar Associates","single_value":"Negative","multi_value":"{\"Legal Challenge\": \"Negative\", \"Article 14\": \"Negative\"}","suggestion":true},
+                {"CommentID":3022,"UserID":"USER_202","Timestamp":"2025-10-25 10:30","CommentText":"From a risk management perspective, the core issue is not the exemption itself, but the lack of clarity on prudential norms. RBI-regulated NBFCs are subject to stringent capital adequacy ratios and provisioning requirements. The notice is silent on whether IFSCA-regulated Finance Companies will be held to the same standard. Without this parity, the exemption is premature. We suggest deferring this amendment until the IFSCA aligns its prudential norms with the RBI's.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Suresh Iyer","UserRole":"Professional","OrganizationName":"Deloitte India","single_value":"Negative","multi_value":"{\"Risk Management\": \"Negative\", \"Prudential Norms\": \"Negative\"}","suggestion":true},
+                {"CommentID":3023,"UserID":"USER_203","Timestamp":"2025-10-25 11:45","CommentText":"The introduction of the term 'Global or Regional Corporate Treasury Centre' in Rule 11(2)(b) is a significant and welcome addition. This aligns with international best practices in financial hubs like Singapore and Dublin. However, to fully leverage this, the Ministry should also consider parallel amendments to FEMA regulations to ensure seamless cross-border fund flows for these treasury centers.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"John Smith","UserRole":"Director/Designated Partner","OrganizationName":"Global Capital Investors","single_value":"Positive","multi_value":"{\"Treasury Centre\": \"Positive\", \"FEMA\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3024,"UserID":"USER_204","Timestamp":"2025-10-25 14:05","CommentText":"While this notice focuses on lenders, the impact on the broader corporate debt market must be considered. Increased lending from a less-regulated sector could lead to a bubble in lower-quality corporate debt. This is a macroeconomic risk that seems to be overlooked.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Aditya Kumar","UserRole":"Researcher","OrganizationName":"Delhi School of Economics","single_value":"Negative","multi_value":"{\"Macroeconomic Risk\": \"Negative\", \"Corporate Debt\": \"Negative\"}","suggestion":false},
+                {"CommentID":3025,"UserID":"USER_205","Timestamp":"2025-10-26 09:50","CommentText":"The proposed change is operationally sound. The language in Rule 11(2)(b) referencing the IFSCA (Finance Company) Regulations, 2021 provides a clear and unambiguous legal anchor. This reduces interpretive risk and is a good example of clean drafting. We are in full agreement.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"In agreement","UserName":"Varun Desai","UserRole":"Professional Staff Member","OrganizationName":"Cyril Amarchand Mangaldas","single_value":"Positive","multi_value":"{\"Rule 11(2)(b)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3026,"UserID":"USER_206","Timestamp":"2025-10-26 11:11","CommentText":"The notice fails to address the grievance redressal mechanism. If an IFSCA Finance Company, now exempt from certain rules, engages in predatory practices, which authority will have primary jurisdiction? The MCA, RBI, or IFSCA? This ambiguity is a significant concern for consumer protection.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Priya David","UserRole":"Researcher","OrganizationName":"Centre for Financial Accountability","single_value":"Negative","multi_value":"{\"Grievance Redressal\": \"Negative\", \"Consumer Protection\": \"Negative\"}","suggestion":false},
+                {"CommentID":3027,"UserID":"USER_207","Timestamp":"2025-10-26 14:20","CommentText":"I am a Chartered Accountant. The requirement for an auditor's certificate is a crucial safeguard. To strengthen it, I suggest that the auditor should be required to certify not just the borrowing limits, but also the adequacy of the company's internal financial controls for managing lending risk. This would make the certificate far more meaningful.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Manoj Gupta","UserRole":"Professional","OrganizationName":"The Institute of Chartered Accountants of India (ICAI)","single_value":"Neutral","multi_value":"{\"Auditor Certificate\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3028,"UserID":"USER_208","Timestamp":"2025-10-26 16:35","CommentText":"So, if a company is registered in the IFSC, it gets special treatment, but if it's registered in Nagpur and doing the same business, it doesn't? How is that fair to the rest of the country's businesses? This is a bad policy that creates an unlevel playing field.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sunil Agarwal","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Fairness\": \"Negative\"}","suggestion":false},
+                {"CommentID":3029,"UserID":"USER_209","Timestamp":"2025-10-27 10:00","CommentText":"The Explanatory Note mentions the goal of making the rules 'self-contained'. This is an excellent objective. The proposed amendment to Rule 11(2) achieves this by clearly incorporating the relevant definitions from the IFSCA regulations. This is a positive example of regulatory drafting.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Anjali Mehta","UserRole":"Professional Staff Member","OrganizationName":"Luthra & Luthra Law Offices","single_value":"Positive","multi_value":"{\"Drafting Quality\": \"Positive\"}","suggestion":false},
+                {"CommentID":3030,"UserID":"USER_210","Timestamp":"2025-10-27 12:15","CommentText":"The proposal to amend Rule 11(2) is a direct consequence of the request made by the IFSCA. This is a positive sign of inter-regulatory cooperation between the MCA, RBI, and IFSCA, which is essential for a stable financial ecosystem.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Rahul Verma","UserRole":"Businessperson","OrganizationName":"","single_value":"Positive","multi_value":"{\"Regulatory Cooperation\": \"Positive\"}","suggestion":false},
+                {"CommentID":3031,"UserID":"USER_211","Timestamp":"2025-10-27 15:40","CommentText":"The fundamental flaw is that this amendment treats 'lending' as a monolithic activity. The risks associated with unsecured personal loans are vastly different from those of secured project finance. The rules should be nuanced enough to differentiate. We suggest creating sub-classes of lending activities with different exemption thresholds.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Ravi Shankar","UserRole":"Professional","OrganizationName":"CRISIL","single_value":"Negative","multi_value":"{\"Risk Differentiation\": \"Negative\"}","suggestion":true},
+                {"CommentID":3032,"UserID":"USER_212","Timestamp":"2025-10-28 09:45","CommentText":"This is simply an enabling provision. The true test will be in the IFSCA's ability to effectively supervise these entities. As long as their supervisory framework is robust, we see no major issue with the proposed exemption.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Neha Kapoor","UserRole":"Professional","OrganizationName":"Morgan Stanley India","single_value":"Positive","multi_value":"{\"Supervision\": \"Neutral\"}","suggestion":false},
+                {"CommentID":3033,"UserID":"USER_213","Timestamp":"2025-10-28 11:05","CommentText":"The consultation period was too short. A change with such significant implications for the financial services landscape deserved a 60-day comment period, not the truncated one provided. This rushed process undermines the quality of feedback.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Aisha Khan","UserRole":"Professional","OrganizationName":"Confederation of Indian Industry (CII)","single_value":"Negative","multi_value":"{\"Consultation Process\": \"Negative\"}","suggestion":false},
+                {"CommentID":3034,"UserID":"USER_214","Timestamp":"2025-10-28 14:50","CommentText":"I'm a student of company law. This amendment to Rule 11(2) seems to be a logical extension of the principle already established for NBFCs. It promotes consistency in the application of Section 186, which is a positive legal development.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Ishaan Verma","UserRole":"Student","OrganizationName":"NLSIU Bangalore","single_value":"Positive","multi_value":"{\"Legal Consistency\": \"Positive\"}","suggestion":false},
+                {"CommentID":3035,"UserID":"USER_215","Timestamp":"2025-10-29 10:00","CommentText":"The proposal is good, but the final notification must be accompanied by a detailed FAQ document to guide practitioners on the operational aspects of compliance, especially regarding the new definition of 'Finance Company'.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Rajat Kapoor","UserRole":"Director/Designated Partner","OrganizationName":"SKV & Associates","single_value":"Neutral","multi_value":"{\"Implementation Guidance\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3036,"UserID":"USER_216","Timestamp":"2025-10-29 13:30","CommentText":"Have you considered the impact on the resolution of distressed assets? If an exempt IFSCA company is a major lender to a company undergoing insolvency, the lack of Section 186 restrictions could complicate the CIRP. This needs to be evaluated.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aditi Rao","UserRole":"Researcher","OrganizationName":"Vidhi Centre for Legal Policy","single_value":"Negative","multi_value":"{\"Insolvency Impact\": \"Negative\"}","suggestion":true},
+                {"CommentID":3037,"UserID":"USER_217","Timestamp":"2025-10-30 11:20","CommentText":"The language is clear, the justification is sound, and the objective is aligned with national economic goals. There is no valid reason to oppose this amendment.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Vikram Singh","UserRole":"Manager/Secretary/Authorized Representative","OrganizationName":"Global Fund Services","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3038,"UserID":"USER_218","Timestamp":"2025-10-30 15:55","CommentText":"While the notice is clear, the real issue will be its enforcement. Does the MCA have the bandwidth to monitor these newly exempt entities effectively? Without a clear plan for enhanced supervision, this is a risky move.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arun Kumar","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Enforcement\": \"Negative\", \"Supervision\": \"Negative\"}","suggestion":false},
+                {"CommentID":3039,"UserID":"USER_219","Timestamp":"2025-10-31 10:10","CommentText":"The substitution proposed in Rule 11(2)(a) is a purely technical and grammatical correction. It has no substantive impact but is necessary for legal clarity. We agree with it.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(a)","CommentCategory":"In agreement","UserName":"Priya Reddy","UserRole":"Professional","OrganizationName":"AZB & Partners","single_value":"Positive","multi_value":"{\"Rule 11(2)(a)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3040,"UserID":"USER_220","Timestamp":"2025-10-31 14:45","CommentText":"Ultimately, this is a positive step towards making GIFT City a truly competitive global financial hub. The regulatory environment must evolve to match the ambitions of the project, and this amendment is a key part of that evolution.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Siddharth Kumar","UserRole":"Company/LLP","OrganizationName":"GIFT City Investors Forum","single_value":"Positive","multi_value":"{\"GIFT City\": \"Positive\"}","suggestion":false},
+                {"CommentID":3041,"UserID":"USER_301","Timestamp":"2025-10-25 09:15","CommentText":"Strongly oppose.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ravi Chandran","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":3042,"UserID":"USER_302","Timestamp":"2025-10-25 10:30","CommentText":"This is a positive and necessary change. Well done, MCA.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Priya David","UserRole":"Businessperson","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3043,"UserID":"USER_303","Timestamp":"2025-10-25 11:45","CommentText":"The timeline is far too aggressive. The industry needs at least 90 days to analyze the full implications of the changes to Rule 11(2) and provide substantive, well-researched feedback. Rushing this process will only lead to poor policy outcomes and potential legal challenges down the line. We strongly suggest an extension of the comment period.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aisha Khan","UserRole":"Professional","OrganizationName":"Confederation of Indian Industry (CII)","single_value":"Negative","multi_value":"{\"Timeline\": \"Negative\", \"Process\": \"Negative\"}","suggestion":true},
+                {"CommentID":3044,"UserID":"USER_304","Timestamp":"2025-10-25 14:05","CommentText":"Regarding Rule 11(2)(b), the reference to the IFSCA (Finance Company) Regulations, 2021 is appropriate and provides the necessary legal anchor for the definition of a 'Finance Company'. This cross-referencing is a good drafting practice and we support it.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"In agreement","UserName":"Varun Desai","UserRole":"Professional Staff Member","OrganizationName":"Cyril Amarchand Mangaldas","single_value":"Positive","multi_value":"{\"Rule 11(2)(b)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3045,"UserID":"USER_305","Timestamp":"2025-10-26 09:50","CommentText":"On behalf of the Indian Banks' Association, we wish to submit our detailed observations on the proposed amendment. While we appreciate the Ministry's objective to enhance the ease of doing business in the IFSC, we believe the current draft presents significant prudential and systemic risks that must be addressed. Our concerns are threefold: First, the principle of 'Risk Parity' is violated. The amendment treats RBI-regulated NBFCs and IFSCA-regulated Finance Companies as equivalent, but their underlying supervisory and capital adequacy norms are not harmonized. Granting the same exemptions without ensuring the same level of regulatory rigor creates a significant supervisory gap. Second, the broad definition of 'lending activities' in the proposed Rule 11(2)(b) could inadvertently include high-risk, speculative financial products that fall outside the scope of traditional lending, thereby amplifying systemic risk. Third, the lack of a clear, periodic review mechanism for this exemption is a major oversight. Economic conditions and risk profiles change, and a permanent exemption could become problematic in the future. Therefore, we strongly recommend that the Ministry defers this notification and establishes a joint committee with the RBI and IFSCA to first harmonize the prudential norms for these entities before considering any exemptions. Furthermore, we suggest that any exemption granted should be subject to a mandatory review every three years.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arun Kumar","UserRole":"Director/Designated Partner","OrganizationName":"Indian Banks' Association","single_value":"Negative","multi_value":"{\"Risk\": \"Negative\", \"Supervision\": \"Negative\", \"Legal Ambiguity\": \"Negative\"}","suggestion":true},
+                {"CommentID":3046,"UserID":"USER_306","Timestamp":"2025-10-26 11:11","CommentText":"Bad idea.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Anjali Sharma","UserRole":"Student","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false},
+                {"CommentID":3047,"UserID":"USER_307","Timestamp":"2025-10-26 14:20","CommentText":"The language is clear and the intent is good.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Rahul Verma","UserRole":"Individual","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3048,"UserID":"USER_308","Timestamp":"2025-10-26 16:35","CommentText":"The proposed amendment to Rule 11(2) is a welcome step towards regulatory harmonization for financial institutions operating within the IFSC. This will reduce compliance friction and make India a more attractive destination for global capital. We are in full agreement with the proposal as drafted.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"John Smith","UserRole":"Director/Designated Partner","OrganizationName":"Global Capital Investors","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3049,"UserID":"USER_309","Timestamp":"2025-10-27 10:00","CommentText":"Why is the government always favouring big business? This does nothing for the common person.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sanjay Tiwari","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Fairness\": \"Negative\"}","suggestion":false},
+                {"CommentID":3050,"UserID":"USER_310","Timestamp":"2025-10-27 12:15","CommentText":"The focus on the IFSC is strategically important for India's economic future. This amendment is a small but necessary piece of that larger puzzle. It has our full support.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Neha Kapoor","UserRole":"Professional","OrganizationName":"Morgan Stanley India","single_value":"Positive","multi_value":"{\"IFSCA\": \"Positive\"}","suggestion":false},
+                {"CommentID":3051,"UserID":"USER_311","Timestamp":"2025-10-27 15:40","CommentText":"The change to Rule 11(2)(a) is a minor technical correction to fix a grammatical inconsistency in the original rules. It has no substantive impact but is necessary for legal clarity. We agree with this specific change.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(a)","CommentCategory":"In agreement","UserName":"Anjali Mehta","UserRole":"Professional Staff Member","OrganizationName":"Luthra & Luthra Law Offices","single_value":"Positive","multi_value":"{\"Rule 11(2)(a)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3052,"UserID":"USER_312","Timestamp":"2025-10-28 09:45","CommentText":"This is a dangerous path. Deregulation without adequate supervision was a key cause of the 2008 financial crisis. We seem to be ignoring the lessons of history. The potential for a build-up of systemic risk is too high to justify the marginal benefits of this exemption.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Aditya Kumar","UserRole":"Researcher","OrganizationName":"Delhi School of Economics","single_value":"Negative","multi_value":"{\"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3053,"UserID":"USER_313","Timestamp":"2025-10-28 11:05","CommentText":"I'm concerned about the operational implementation. Will the MCA's e-filing portals be updated in time to recognize these new exemptions? A delay could cause significant compliance issues for companies. A clear transition plan is needed.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Priya Singh","UserRole":"Company/LLP","OrganizationName":"TechFin Solutions Ltd.","single_value":"Neutral","multi_value":"{\"Implementation\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3054,"UserID":"USER_314","Timestamp":"2025-10-28 14:50","CommentText":"Great move!","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Vikram Singh","UserRole":"Individual","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3055,"UserID":"USER_315","Timestamp":"2025-10-29 10:00","CommentText":"As a legal practitioner specializing in Company Law, I must point out a potential conflict between this proposed exemption under the Companies Act and existing SEBI regulations for listed entities that may have subsidiaries in the IFSC. The interaction between these regulatory frameworks is not addressed in the notice. The Ministry should issue a clarification or a circular addressing how this amendment will interact with SEBI's Listing Obligations and Disclosure Requirements (LODR) to prevent a situation where a company is compliant with MCA rules but in breach of SEBI regulations. Without this clarity, the amendment could create more legal confusion than it solves.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Meera Krishnan","UserRole":"Professional","OrganizationName":"J. Sagar Associates","single_value":"Negative","multi_value":"{\"Legal Conflict\": \"Negative\", \"SEBI\": \"Negative\"}","suggestion":true},
+                {"CommentID":3056,"UserID":"USER_316","Timestamp":"2025-10-29 13:30","CommentText":"I don't really understand all the details, but it seems like the government is trying to make things easier for businesses, which I guess is a good thing.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Sunil Agarwal","UserRole":"Individual","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3057,"UserID":"USER_317","Timestamp":"2025-10-30 11:20","CommentText":"This is a very positive and welcome step.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Aditi Sharma","UserRole":"Director/Designated Partner","OrganizationName":"ABC Capital Pvt. Ltd.","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3058,"UserID":"USER_318","Timestamp":"2025-10-30 15:55","CommentText":"The core issue is accountability. By removing a layer of regulatory scrutiny required by Section 186, you are making it easier for mismanagement to occur. This is not in the interest of shareholders or the public. The current checks and balances should remain in place for all entities, regardless of their location.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ravi Shankar","UserRole":"Professional","OrganizationName":"CRISIL","single_value":"Negative","multi_value":"{\"Accountability\": \"Negative\"}","suggestion":false},
+                {"CommentID":3059,"UserID":"USER_319","Timestamp":"2025-10-31 10:10","CommentText":"This is a well-balanced proposal. It rightly identifies a need for regulatory parity to boost the IFSC while the core provisions of Section 186(1) still apply, preventing complete deregulation. We support this balanced approach.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Manoj Gupta","UserRole":"Professional","OrganizationName":"The Institute of Chartered Accountants of India (ICAI)","single_value":"Positive","multi_value":"{\"Regulatory Parity\": \"Positive\"}","suggestion":false},
+                {"CommentID":3060,"UserID":"USER_320","Timestamp":"2025-10-31 14:45","CommentText":"This is exactly the kind of proactive, business-friendly reform India needs to compete on the global stage. My organization and its members are extremely supportive of this amendment and urge the Ministry to notify it at the earliest.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Aarav Singh","UserRole":"Professional","OrganizationName":"Fintech Association of India","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3061,"UserID":"USER_401","Timestamp":"2025-10-28 10:05","CommentText":"We strongly oppose the proposed amendment to Rule 11(2). Granting this exemption to IFSCA Finance Companies without the same level of RBI oversight introduces unacceptable systemic risk and weakens financial stability.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ramesh Gupta","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3062,"UserID":"USER_402","Timestamp":"2025-10-28 10:07","CommentText":"I am writing to oppose the amendment to Rule 11(2). Giving this exemption to IFSCA companies without the same RBI scrutiny is a bad idea that introduces systemic risk and harms financial stability.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sita Verma","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3063,"UserID":"USER_403","Timestamp":"2025-10-28 10:09","CommentText":"The proposed change to Rule 11(2) must be rejected. To allow IFSCA Finance Companies this exemption without equivalent RBI oversight is to invite unacceptable risk and undermine the stability of our financial system.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Arjun Singh","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3064,"UserID":"USER_404","Timestamp":"2025-10-28 10:11","CommentText":"In my opinion, the amendment for Rule 11(2) is a grave mistake. It creates a major systemic risk by giving IFSCA companies an exemption that weakens financial stability, all without the necessary RBI oversight.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Priya Sharma","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3065,"UserID":"USER_405","Timestamp":"2025-10-28 10:14","CommentText":"We believe that the proposed amendment to Rule 11(2) should be opposed. It is not acceptable to grant an exemption to IFSCA Finance Companies without the same level of RBI supervision, as it poses a systemic risk and weakens the financial system.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Vikram Rathore","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3066,"UserID":"USER_406","Timestamp":"2025-10-28 10:16","CommentText":"This proposal to amend Rule 11(2) is deeply concerning. Granting an exemption to IFSCA companies without the same stringent RBI oversight introduces a serious systemic risk that could destabilize our financial sector.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Anjali Mehta","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3067,"UserID":"USER_407","Timestamp":"2025-10-28 10:18","CommentText":"I must oppose the change to Rule 11(2). The exemption for IFSCA Finance Companies is a risk to financial stability and it is unacceptable without the same level of oversight that the RBI provides.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sameer Khan","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3068,"UserID":"USER_408","Timestamp":"2025-10-28 10:20","CommentText":"Please reject the amendment to Rule 11(2). Financial stability is weakened by this exemption for IFSCA companies, and the lack of equivalent RBI oversight creates a systemic risk we cannot afford.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sunita Rao","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3069,"UserID":"USER_409","Timestamp":"2025-10-28 10:22","CommentText":"It is clear that the amendment to Rule 11(2) is a bad idea. We oppose it because this exemption for IFSCA Finance Companies weakens stability and introduces systemic risk without proper RBI supervision.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Amit Patel","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3070,"UserID":"USER_410","Timestamp":"2025-10-28 10:25","CommentText":"The stability of our financial system is threatened by the proposed change to Rule 11(2). We oppose granting this exemption to IFSCA companies without the same level of oversight from the RBI due to the unacceptable systemic risk.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Kavita Iyer","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3071,"UserID":"USER_411","Timestamp":"2025-10-28 10:27","CommentText":"We are writing to express our strong opposition to the draft amendment of Rule 11(2). Allowing IFSCA Finance Companies to operate without the same level of RBI oversight is a significant mistake that introduces systemic risk and undermines financial stability.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Rajesh Kumar","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3072,"UserID":"USER_412","Timestamp":"2025-10-28 10:29","CommentText":"The proposed exemption in Rule 11(2) is unacceptable. It creates a dangerous loophole by allowing IFSCA companies to bypass necessary RBI scrutiny, which in turn creates systemic risk and harms the stability of the entire financial system.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Pooja Desai","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3073,"UserID":"USER_413","Timestamp":"2025-10-28 10:31","CommentText":"Financial stability must not be compromised. Therefore, we oppose the amendment to Rule 11(2). Granting an exemption to IFSCA companies without equal RBI oversight introduces a systemic risk that is simply too great.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Aditya Sharma","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3074,"UserID":"USER_414","Timestamp":"2025-10-28 10:33","CommentText":"It is irresponsible to amend Rule 11(2) in this manner. The exemption for IFSCA Finance Companies is a direct threat to financial stability, creating systemic risk due to the lack of equivalent RBI supervision. We oppose this.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Neha Reddy","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3075,"UserID":"USER_415","Timestamp":"2025-10-28 10:35","CommentText":"We urge the Ministry to reconsider the amendment to Rule 11(2). The systemic risk and threat to financial stability from this exemption for IFSCA companies without proper RBI oversight are too significant to ignore. We oppose the proposal.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sanjay Mehta","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3076,"UserID":"USER_416","Timestamp":"2025-10-28 10:37","CommentText":"My comment is to strongly oppose the new Rule 11(2). The exemption for IFSCA Finance Companies is a bad decision. It will create risk and harm our financial stability because there is no RBI oversight.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Meena Gupta","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3077,"UserID":"USER_417","Timestamp":"2025-10-28 10:39","CommentText":"The proposed change in Rule 11(2) for IFSCA companies is unacceptable. We oppose it. It weakens financial stability and creates systemic risk by removing the need for RBI-level scrutiny.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Anil Kumar","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3078,"UserID":"USER_418","Timestamp":"2025-10-28 10:41","CommentText":"Do not pass the amendment to Rule 11(2). This exemption introduces systemic risk to our financial system and weakens stability. It is wrong to allow this without the same oversight the RBI provides.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sunil Patil","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3079,"UserID":"USER_419","Timestamp":"2025-10-28 10:43","CommentText":"I am against the Rule 11(2) change. An exemption for IFSCA Finance Companies without RBI oversight is a risk to stability. It's unacceptable.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Deepa Shah","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3080,"UserID":"USER_420","Timestamp":"2025-10-28 10:45","CommentText":"We must protect our financial stability. The amendment to Rule 11(2) does the opposite. We oppose this exemption for IFSCA companies because it introduces systemic risk without proper RBI supervision.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ritu Agarwal","UserRole":"Individual","OrganizationName":"All India Small NBFC Association","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3081,"UserID":"USER_501","Timestamp":"2025-10-29 11:00","CommentText":"We fully support the proposed amendment to Rule 11(2). This is a fantastic step for the ease of doing business and will create a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Ankit Jain","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3082,"UserID":"USER_502","Timestamp":"2025-10-29 11:02","CommentText":"We completely support the proposed amendment to Rule 11(2). This is an excellent step for the ease of doing business and creates a level playing field for all IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Priya Agarwal","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3083,"UserID":"USER_503","Timestamp":"2025-10-29 11:04","CommentText":"We fully support this proposed amendment to Rule 11(2). It is a great step towards the ease of doing business and will create a much-needed level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Rohan Mehra","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3084,"UserID":"USER_504","Timestamp":"2025-10-29 11:06","CommentText":"Our organization fully supports the amendment to Rule 11(2). This is a fantastic move for improving the ease of doing business and will ensure a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Sneha Gupta","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3085,"UserID":"USER_505","Timestamp":"2025-10-29 11:08","CommentText":"We support the proposed amendment to Rule 11(2). This is a very positive step for the ease of doing business and it creates a level playing field for Finance Companies in the IFSC.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Amit Kumar","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3086,"UserID":"USER_506","Timestamp":"2025-10-29 11:10","CommentText":"I fully support the proposed amendment to Rule 11(2). It's a great step for ease of doing business and will create a level playing field for the IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Divya Singh","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3087,"UserID":"USER_507","Timestamp":"2025-10-29 11:12","CommentText":"We are in full support of the proposed amendment to Rule 11(2). This is a fantastic step for the ease of doing business and will create a level playing field for Finance Companies located in the IFSC.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Vikram Reddy","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3088,"UserID":"USER_508","Timestamp":"2025-10-29 11:14","CommentText":"We support the proposed amendment to Rule 11(2) fully. This represents an excellent step for the ease of doing business and creates a level playing field for all IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Nisha Patel","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3089,"UserID":"USER_509","Timestamp":"2025-10-29 11:16","CommentText":"The proposed amendment to Rule 11(2) has our full support. It's a great step for the ease of doing business and ensures a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Karan Malhotra","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3090,"UserID":"USER_510","Timestamp":"2025-10-29 11:18","CommentText":"We strongly support the proposed amendment to Rule 11(2). This is a positive step for ease of doing business and will create a fair, level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Anjali Sharma","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3091,"UserID":"USER_511","Timestamp":"2025-10-29 11:20","CommentText":"We fully support the proposed amendment to Rule 11(2). This is a great step that improves the ease of doing business and creates a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Rajiv Kumar","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3092,"UserID":"USER_512","Timestamp":"2025-10-29 11:22","CommentText":"We support the proposed amendment to Rule 11(2). It is a fantastic step for the ease of doing business and will create a fair playing field for all IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Sunita Mishra","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3093,"UserID":"USER_513","Timestamp":"2025-10-29 11:24","CommentText":"This proposed amendment to Rule 11(2) has our full support. It's an excellent step for the ease of doing business and will create a level playing field for the Finance Companies in the IFSC.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Arun Verma","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3094,"UserID":"USER_514","Timestamp":"2025-10-29 11:26","CommentText":"We completely support the amendment to Rule 11(2). This is a good step for the ease of doing business, creating a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Poonam Mehta","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3095,"UserID":"USER_515","Timestamp":"2025-10-29 11:28","CommentText":"We fully support the proposed amendment to Rule 11(2). This is a fantastic step for business and creates a level playing field for Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Deepak Singh","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3096,"UserID":"USER_516","Timestamp":"2025-10-29 11:30","CommentText":"The amendment to Rule 11(2) is a great step for ease of doing business and will create a level playing field for IFSCA Finance Companies. We fully support it.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Shalini Iyer","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3097,"UserID":"USER_517","Timestamp":"2025-10-29 11:32","CommentText":"We fully support the proposed amendment for Rule 11(2). It is a great step for improving the ease of doing business and will create a level playing field for our IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Vikas Patel","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3098,"UserID":"USER_518","Timestamp":"2025-10-29 11:34","CommentText":"We support the proposed amendment to Rule 11(2). This is an important step for the ease of doing business and creates a level playing field for Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Ananya Reddy","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3099,"UserID":"USER_519","Timestamp":"2025-10-29 11:36","CommentText":"Full support for the proposed amendment to Rule 11(2). A great step for ease of doing business and a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Rajesh Nair","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3100,"UserID":"USER_520","Timestamp":"2025-10-29 11:38","CommentText":"We fully back the proposed amendment to Rule 11(2). This is a fantastic step for the ease of doing business and will create a level playing field for IFSCA Finance Companies.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Meena Sharma","UserRole":"Businessperson","OrganizationName":"India Forward Business Council","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false},
+                {"CommentID":3101,"UserID":"USER_601","Timestamp":"2025-10-05 10:15","CommentText":"Having analyzed the regulatory frameworks in Singapore (MAS) and Dubai (DIFC), it's clear that this amendment to Rule 11(2) is a necessary step to bring India's IFSC framework at par with leading global financial centers. This is crucial for attracting foreign capital and we support it.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Aditya Sharma","UserRole":"Professional","OrganizationName":"KPMG India","single_value":"Positive","multi_value":"{\"IFSCA\": \"Positive\", \"Global Standards\": \"Positive\"}","suggestion":false},
+                {"CommentID":3102,"UserID":"USER_602","Timestamp":"2025-10-05 11:30","CommentText":"The non-obstante clause in Section 186 already provides significant leeway. The proposed amendment to Rule 11(2) seems to create a carve-out that could be considered ultra vires to the parent Act's intent. We recommend the Ministry publish a detailed legal opinion clarifying its constitutionality to pre-empt a writ petition challenging the rule.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Meera Krishnan","UserRole":"Professional","OrganizationName":"J. Sagar Associates","single_value":"Negative","multi_value":"{\"Legal Challenge\": \"Negative\"}","suggestion":true},
+                {"CommentID":3103,"UserID":"USER_603","Timestamp":"2025-10-05 14:00","CommentText":"How can the government justify fast-tracking rules that benefit wealthy financiers while ignoring the plight of MSMEs? This is a betrayal of the public trust and shows the ministry's priorities are misplaced.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sanjay Tiwari","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Fairness\": \"Negative\", \"MSMEs\": \"Negative\"}","suggestion":false},
+                {"CommentID":3104,"UserID":"USER_604","Timestamp":"2025-10-08 16:20","CommentText":"The Explanatory Note provided is insufficient. It mentions taking suggestions from a 'Post-Budget Seminar' into account, but the minutes and attendance of that seminar are not public. For true transparency, all inputs informing a draft rule should be made public.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Aditi Rao","UserRole":"Researcher","OrganizationName":"Vidhi Centre for Legal Policy","single_value":"Negative","multi_value":"{\"Transparency\": \"Negative\", \"Process\": \"Negative\"}","suggestion":true},
+                {"CommentID":3105,"UserID":"USER_605","Timestamp":"2025-10-08 17:00","CommentText":"This is a simple, clean, and effective amendment. No notes.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Vikram Singh","UserRole":"Individual","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3106,"UserID":"USER_606","Timestamp":"2025-10-12 11:00","CommentText":"The proposed insertion in Rule 11(2)(b) will directly conflict with our internal risk assessment protocols, which do not differentiate between IFSC and domestic entities for lending purposes. This will create a significant operational and compliance burden for us.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Priya Singh","UserRole":"Company/LLP","OrganizationName":"Bajaj Finserv","single_value":"Negative","multi_value":"{\"Operational Burden\": \"Negative\"}","suggestion":false},
+                {"CommentID":3107,"UserID":"USER_607","Timestamp":"2025-10-12 12:30","CommentText":"This is nothing more than regulatory capture. A specific request was made by IFSCA, and the Ministry has obliged without a broader public debate on the consequences. The process feels opaque.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Ravi Chandran","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Process\": \"Negative\"}","suggestion":false},
+                {"CommentID":3108,"UserID":"USER_608","Timestamp":"2025-10-12 15:00","CommentText":"What happens in a scenario where an IFSCA Finance Company, exempt under this rule, provides a guarantee for a loan that subsequently defaults, triggering a cross-border insolvency case? The legal complexities here are immense and are not addressed at all.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Rajat Kapoor","UserRole":"Director/Designated Partner","OrganizationName":"SKV & Associates","single_value":"Negative","multi_value":"{\"Insolvency Impact\": \"Negative\"}","suggestion":false},
+                {"CommentID":3109,"UserID":"USER_609","Timestamp":"2025-10-15 10:45","CommentText":"The language used is precise. The amendment is narrow in scope and a logical extension of existing principles. We see no reason for the alarmist reactions from some quarters.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Varun Desai","UserRole":"Professional Staff Member","OrganizationName":"Cyril Amarchand Mangaldas","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3110,"UserID":"USER_610","Timestamp":"2025-10-15 11:55","CommentText":"This is exactly what we need to make GIFT City a success. Thank you, MCA.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Siddharth Kumar","UserRole":"Company/LLP","OrganizationName":"GIFT City Investors Forum","single_value":"Positive","multi_value":"{\"GIFT City\": \"Positive\"}","suggestion":false},
+                {"CommentID":3111,"UserID":"USER_611","Timestamp":"2025-10-19 14:10","CommentText":"The focus on 'ease of doing business' is commendable, but not at the cost of 'ease of committing fraud'. The checks and balances in Section 186 exist for a reason. This exemption weakens them.","DocumentID":"Public-Notice-June-2025","SectionID":"SectionID","CommentCategory":"Suggest removal of the chapter/section","UserName":"Sunil Agarwal","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Fraud Risk\": \"Negative\"}","suggestion":false},
+                {"CommentID":3112,"UserID":"USER_612","Timestamp":"2025-10-19 15:30","CommentText":"We recommend a small but crucial change to the wording in Rule 11(2)(b): instead of 'shall be inserted', it should read 'may be inserted, subject to approval from the Registrar'. This adds a discretionary check.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Priya Reddy","UserRole":"Professional","OrganizationName":"AZB & Partners","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true},
+                {"CommentID":3113,"UserID":"USER_613","Timestamp":"2025-10-22 10:00","CommentText":"This is long overdue. Congratulations to the Ministry on this progressive reform.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Rahul Verma","UserRole":"Businessperson","OrganizationName":"","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false},
+                {"CommentID":3114,"UserID":"USER_614","Timestamp":"2025-10-22 11:25","CommentText":"The potential for money laundering through these loosely-regulated IFSC entities is a massive red flag that this notice completely ignores.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Suresh Reddy","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Money Laundering\": \"Negative\"}","suggestion":false},
+                {"CommentID":3115,"UserID":"USER_615","Timestamp":"2025-10-22 12:40","CommentText":"While the text of the amendment itself is clear, the 'Note' at the end is confusing. It lists previous amendments but doesn't explain how they interact with this new one. A consolidated version of the rule should be published.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Anjali Mehta","UserRole":"Professional Staff Member","OrganizationName":"Luthra & Luthra Law Offices","single_value":"Neutral","multi_value":"{\"Clarity\": \"Negative\"}","suggestion":true},
+                {"CommentID":3116,"UserID":"USER_616","Timestamp":"2025-10-26 16:00","CommentText":"I am a finance student. This seems like a textbook case of regulatory arbitrage, where companies will flock to the jurisdiction with the weakest rules. This is not healthy for the economy in the long run.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Rohan Gupta","UserRole":"Student","OrganizationName":"IIM Bangalore","single_value":"Negative","multi_value":"{\"Regulatory Arbitrage\": \"Negative\"}","suggestion":false},
+                {"CommentID":3117,"UserID":"USER_617","Timestamp":"2025-10-26 17:10","CommentText":"Why not just simplify Section 186 for all companies instead of creating these complex exemptions and special categories? A simpler, universal rule would be far better.","DocumentID":"Public-Notice-June-2025","SectionID":"SectionID","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arun Kumar","UserRole":"Individual","OrganizationName":"","single_value":"Neutral","multi_value":"{\"Simplicity\": \"Positive\"}","suggestion":true},
+                {"CommentID":3118,"UserID":"USER_618","Timestamp":"2025-10-28 10:50","CommentText":"This is a well-considered amendment that balances the need for growth in the IFSC with existing regulatory principles. We support it.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Manoj Gupta","UserRole":"Professional","OrganizationName":"The Institute of Chartered Accountants of India (ICAI)","single_value":"Positive","multi_value":"{\"Balance\": \"Positive\"}","suggestion":false},
+                {"CommentID":3119,"UserID":"USER_619","Timestamp":"2025-10-30 14:00","CommentText":"The title 'Public Notice' is misleading. This is a highly technical legal amendment that 99% of the public cannot possibly understand. The consultation process is an illusion.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Ravi Chandran","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Process\": \"Negative\"}","suggestion":false},
+                {"CommentID":3120,"UserID":"USER_620","Timestamp":"2025-10-31 16:50","CommentText":"As the consultation period closes, we want to place on record our firm's complete endorsement of this amendment. It is a critical enabler for the success of GIFT City and will have a multiplier effect on the Indian economy. We urge the Ministry to notify it without further delay.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Siddharth Kumar","UserRole":"Company/LLP","OrganizationName":"GIFT City Investors Forum","single_value":"Positive","multi_value":"{\"GIFT City\": \"Positive\"}","suggestion":false}
+            ]
+        };
+
+        // --- GLOBAL STATE ---
+        // This object holds the current state of all filters
+        let currentFilters = {
+            sentiment: 'All',
+            suggestion: false,
+            stakeholder: 'All',
+            wordCloud: null,
+            thematic: null
+        };
+        // This is the master list of comments that we will filter
+        let masterComments = mockData.comments;
+        let pieChart, lineChart; // To hold chart instances for updates
+
+        // --- DOM ELEMENTS ---
+        const landingPage = document.getElementById('landing-page');
+        const loadingScreen = document.getElementById('loading-screen');
+        const dashboard = document.getElementById('dashboard');
+        const startAnalysisBtn = document.getElementById('start-analysis-btn');
+        const pdfUpload = document.getElementById('pdf-upload');
+        const csvUpload = document.getElementById('csv-upload');
+        const pdfFilename = document.getElementById('pdf-filename');
+        const csvFilename = document.getElementById('csv-filename');
+        const aspectModal = new bootstrap.Modal(document.getElementById('aspectModal'));
+        
+        // --- EVENT LISTENERS ---
+        // This function runs when the page is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Event listeners for file upload boxes
+            pdfUpload.addEventListener('change', (e) => handleFileUpload(e, pdfFilename, 'pdf-upload-box'));
+            csvUpload.addEventListener('change', (e) => handleFileUpload(e, csvFilename, 'csv-upload-box'));
+            
+            // Event listener for the main analysis button
+            startAnalysisBtn.addEventListener('click', startAnalysis);
+            
+            // Event listeners for the filter controls on the dashboard
+            document.getElementById('sentiment-filter').addEventListener('click', handleSentimentFilter);
+            document.getElementById('suggestion-filter').addEventListener('change', handleSuggestionFilter);
+            document.getElementById('stakeholder-filter').addEventListener('change', handleStakeholderFilter);
+        });
+
+        // --- STAGE 1 & 2 LOGIC: UPLOADING & LOADING ---
+
+        /**
+         * Handles the file input change event to update the UI.
+         * @param {Event} event - The file input event.
+         * @param {HTMLElement} displayElement - The element to show the filename in.
+         * @param {string} boxId - The ID of the upload box to style.
+         */
+        function handleFileUpload(event, displayElement, boxId) {
+            const box = document.getElementById(boxId);
+            if (event.target.files.length > 0) {
+                displayElement.textContent = event.target.files[0].name;
+                box.classList.add('uploaded');
+            } else {
+                displayElement.textContent = '';
+                box.classList.remove('uploaded');
+            }
+            checkFilesUploaded();
+        }
+
+        /**
+         * Checks if both files have been uploaded to enable the analysis button.
+         */
+        function checkFilesUploaded() {
+            startAnalysisBtn.disabled = !(pdfUpload.files.length > 0 && csvUpload.files.length > 0);
+        }
+        
+        /**
+         * Simulates the transition from landing page to the dashboard.
+         */
+        function startAnalysis() {
+            landingPage.style.display = 'none';
+            loadingScreen.style.display = 'flex';
+
+            // Simulate backend processing time
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                dashboard.style.display = 'block';
+                initializeDashboard();
+            }, 3000); // 3-second simulation
+        }
+        
+        // --- STAGE 3 LOGIC: DASHBOARD INITIALIZATION ---
+
+        /**
+         * Main function to populate all dashboard components with data.
+         */
+        function initializeDashboard() {
+            populateStakeholderFilter();
+            renderOverviewKPIs();
+            renderSentimentPieChart();
+            renderTemporalLineChart();
+            renderWordCloud();
+            renderThematicSummaries();
+            filterAndRenderComments(); // Initial render of all comments
+        }
+        
+        /**
+         * Populates the stakeholder dropdown from the unique roles in the dataset.
+         */
+        function populateStakeholderFilter() {
+            const stakeholderFilter = document.getElementById('stakeholder-filter');
+            const roles = [...new Set(masterComments.map(c => c.UserRole))];
+            roles.sort().forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                stakeholderFilter.appendChild(option);
+            });
+        }
+        
+        // --- RENDERING FUNCTIONS ---
+
+        /**
+         * Renders the top Key Performance Indicator (KPI) cards.
+         */
+        function renderOverviewKPIs() {
+            const stats = mockData.overviewStats;
+            document.getElementById('total-comments').textContent = stats.totalComments;
+            document.getElementById('positive-count').textContent = stats.sentimentDistribution.Positive;
+            document.getElementById('negative-count').textContent = stats.sentimentDistribution.Negative;
+            document.getElementById('neutral-count').textContent = stats.sentimentDistribution.Neutral;
+            document.getElementById('suggestions-found').textContent = stats.suggestionsFound;
+            document.getElementById('campaigns-detected').textContent = stats.campaignsDetected;
+        }
+
+        /**
+         * Renders the sentiment distribution pie chart.
+         */
+        function renderSentimentPieChart() {
+            const ctx = document.getElementById('sentiment-pie-chart').getContext('2d');
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Negative', 'Neutral'],
+                    datasets: [{
+                        data: [
+                            mockData.overviewStats.sentimentDistribution.Positive,
+                            mockData.overviewStats.sentimentDistribution.Negative,
+                            mockData.overviewStats.sentimentDistribution.Neutral
+                        ],
+                        backgroundColor: ['#198754', '#dc3545', '#6c757d'],
+                        borderColor: '#fff',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } },
+                    }
+                }
+            });
+        }
+
+         /**
+         * Renders the temporal sentiment line chart.
+         */
+        function renderTemporalLineChart() {
+            const ctx = document.getElementById('temporal-line-chart').getContext('2d');
+            lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mockData.temporalData.labels,
+                    datasets: [
+                        {
+                            label: 'Positive',
+                            data: mockData.temporalData.positive,
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Negative',
+                            data: mockData.temporalData.negative,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                         {
+                            label: 'Neutral',
+                            data: mockData.temporalData.neutral,
+                            borderColor: '#6c757d',
+                            backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Number of Comments'} }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                    }
+                }
+            });
+        }
+
+        /**
+         * Renders the interactive D3 word cloud.
+         */
+        function renderWordCloud() {
+            const words = mockData.wordCloudData;
+            const container = document.getElementById('wordCloud');
+            const width = container.clientWidth;
+            const height = 300;
+            const fontScale = d3.scaleSqrt().domain([0, d3.max(words, d => d.value)]).range([14, 60]);
+            
+            const layout = d3.layout.cloud()
+                .size([width, height])
+                .words(words.map(d => ({text: d.text, size: fontScale(d.value)})))
+                .padding(5)
+                .rotate(() => (Math.random() > 0.5) ? 0 : 90)
+                .fontSize(d => d.size)
+                .on("end", draw);
+
+            layout.start();
+
+            function draw(words) {
+                d3.select("#wordCloud").html("");
+                d3.select("#wordCloud").append("svg")
+                    .attr("width", layout.size()[0])
+                    .attr("height", layout.size()[1])
+                    .append("g")
+                    .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                    .selectAll("text")
+                    .data(words)
+                    .enter().append("text")
+                    .style("font-size", d => d.size + "px")
+                    .style("font-family", "Inter")
+                    .style("fill", (d, i) => d3.schemeCategory10[i % 10])
+                    .attr("text-anchor", "middle")
+                    .attr("transform", d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+                    .text(d => d.text)
+                    .style("cursor", "pointer")
+                    .on("click", (event, d) => handleWordCloudFilter(d.text));
+            }
+        }
+        
+        /**
+         * Renders the thematic summary list in the left sidebar.
+         */
+        function renderThematicSummaries() {
+            const container = document.getElementById('thematic-summaries');
+            container.innerHTML = ''; // Clear existing
+            
+            // Add an "All" option first
+             const allItem = document.createElement('a');
+            allItem.href = "#";
+            allItem.className = 'list-group-item list-group-item-action active'; // Active by default
+            allItem.dataset.filter = 'All';
+            allItem.innerHTML = `<h6 class="mb-1">All Topics</h6>`;
+            allItem.addEventListener('click', (e) => handleThematicFilter(e.currentTarget));
+            container.appendChild(allItem);
+            
+            Object.entries(mockData.thematicSummaries).forEach(([aspect, summary]) => {
+                const item = document.createElement('a');
+                item.href = "#";
+                item.className = 'list-group-item list-group-item-action';
+                item.dataset.filter = aspect;
+                item.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${aspect}</h6>
+                    </div>
+                    <p class="mb-1 small">${summary}</p>`;
+                item.addEventListener('click', (e) => handleThematicFilter(e.currentTarget));
+                container.appendChild(item);
+            });
+        }
+        
+        /**
+         * Renders the comment cards in the main feed based on filtered data.
+         * @param {Array} commentsToRender - The array of comment objects to display.
+         */
+        function renderCommentCards(commentsToRender) {
+            const feed = document.getElementById('comment-feed');
+            feed.innerHTML = '';
+            document.getElementById('filtered-comment-count').textContent = commentsToRender.length;
+            
+            if (commentsToRender.length === 0) {
+                feed.innerHTML = '<div class="text-center text-muted mt-5"><p>No comments match the current filters.</p></div>';
+                return;
+            }
+            commentsToRender.forEach(comment => {
+                const card = document.createElement('div');
+                card.className = `comment-card card ${comment.single_value}`;
+                
+                // Badges
+                let badgesHTML = `<span class="badge rounded-pill text-bg-${comment.single_value === 'Positive' ? 'success' : comment.single_value === 'Negative' ? 'danger' : 'secondary'} sentiment-badge">${comment.single_value}</span>`;
+                if (comment.suggestion) {
+                    badgesHTML += `<span class="badge rounded-pill suggestion-badge sentiment-badge">💡 Suggestion</span>`;
+                }
+                
+                // ABSA Results
+                let absaHTML = '';
+                const absaData = JSON.parse(comment.multi_value);
+                Object.entries(absaData).forEach(([aspect, aspectSentiment]) => {
+                    const aspectSentClass = aspectSentiment.toLowerCase();
+                    absaHTML += `<span class="badge rounded-pill text-bg-${aspectSentClass === 'positive' ? 'success' : aspectSentClass === 'negative' ? 'danger' : 'secondary'} me-1 absa-tag" data-aspect="${aspect}">${aspect}</span>`;
+                });
+
+                card.innerHTML = `
+                    <div class="comment-header">
+                        <div>
+                            <div class="comment-user">${comment.UserName}</div>
+                            <div class="comment-org">${comment.OrganizationName || 'Individual'}</div>
+                        </div>
+                        <div class="comment-badges">${badgesHTML}</div>
+                    </div>
+                     <p class="comment-summary"><em>"${comment.CommentText.substring(0, 150)}..."</em></p>
+                    <div class="absa-results">
+                        <div class="absa-title">Clause-Level Sentiment</div>
+                        ${absaHTML}
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
+            
+            // Add event listeners to the new aspect tags for the modal
+            feed.querySelectorAll('.absa-tag').forEach(tag => {
+                tag.addEventListener('click', () => showAspectModal(tag.dataset.aspect));
+            });
+        }
+        
+        /**
+         * Shows the modal with the official text for a clicked aspect.
+         * @param {string} aspectKey - The key for the aspect (e.g., "Rule 11(2)").
+         */
+        function showAspectModal(aspectKey) {
+            const aspectText = mockData.parsedDocument[aspectKey] || "No detailed text available for this aspect. This may be a keyword-based aspect.";
+            document.getElementById('aspectModalTitle').textContent = `Official Text: ${aspectKey}`;
+            document.getElementById('aspectModalBody').textContent = aspectText;
+            aspectModal.show();
+        }
+        
+        // --- FILTERING LOGIC ---
+        
+        /**
+         * Handles clicks on the sentiment filter buttons.
+         */
+        function handleSentimentFilter(e) {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelectorAll('#sentiment-filter button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilters.sentiment = e.target.dataset.filter;
+                filterAndRenderComments();
+            }
+        }
+        
+        /**
+         * Handles the suggestion filter switch.
+         */
+        function handleSuggestionFilter(e) {
+            currentFilters.suggestion = e.target.checked;
+            filterAndRenderComments();
+        }
+
+        /**
+         * Handles the stakeholder filter dropdown.
+         */
+        function handleStakeholderFilter(e) {
+            currentFilters.stakeholder = e.target.value;
+            filterAndRenderComments();
+        }
+
+        /**
+         * Handles clicks on words in the word cloud.
+         */
+        function handleWordCloudFilter(word) {
+            alert(`Filtering for comments containing the word: "${word}"`);
+            currentFilters.wordCloud = word; 
+            filterAndRenderComments();
+            currentFilters.wordCloud = null; // Reset for demo purposes
+        }
+
+        /**
+         * Handles clicks on the thematic summary list.
+         */
+        function handleThematicFilter(element) {
+            e.preventDefault();
+            document.querySelectorAll('#thematic-summaries a').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            currentFilters.thematic = element.dataset.filter;
+            filterAndRenderComments();
+        }
+
+        /**
+         * The main filtering function that applies all current filters and re-renders the comment feed.
+         */
+        function filterAndRenderComments() {
+            let filteredComments = [...masterComments];
+
+            // 1. Sentiment Filter
+            if (currentFilters.sentiment !== 'All') {
+                filteredComments = filteredComments.filter(c => c.single_value === currentFilters.sentiment);
+            }
+            
+            // 2. Suggestion Filter
+            if (currentFilters.suggestion) {
+                filteredComments = filteredComments.filter(c => c.suggestion);
+            }
+
+            // 3. Stakeholder Filter
+            if(currentFilters.stakeholder !== 'All') {
+                filteredComments = filteredComments.filter(c => c.UserRole === currentFilters.stakeholder);
+            }
+            
+            // 4. Word Cloud Filter (simple text search)
+            if(currentFilters.wordCloud) {
+                filteredComments = filteredComments.filter(c => c.CommentText.toLowerCase().includes(currentFilters.wordCloud.toLowerCase()));
+            }
+
+             // 5. Thematic/Aspect Filter
+            if (currentFilters.thematic && currentFilters.thematic !== 'All') {
+                filteredComments = filteredComments.filter(c => {
+                    const aspects = Object.keys(JSON.parse(c.multi_value));
+                    return aspects.includes(currentFilters.thematic) || c.SectionID === currentFilters.thematic;
+                });
+            }
+
+            renderCommentCards(filteredComments);
+        }
+
+    </script>
+</body>
+</html>
+

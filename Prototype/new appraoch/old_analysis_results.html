@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - Public Insight Engine</title>
+    <!-- CSS and Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .sidebar {
+            width: 280px; height: 100vh; position: fixed; top: 0; left: 0;
+            background-color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding-top: 1.5rem;
+            display: flex; flex-direction: column; z-index: 100;
+        }
+        .sidebar .logo { font-size: 1.8rem; font-weight: 700; color: #0d6efd; text-align: center; margin-bottom: 2rem; }
+        .sidebar .nav-link {
+            color: #495057; font-weight: 500; display: flex; align-items: center;
+            padding: 0.75rem 1.5rem; margin: 0.25rem 1rem; border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .sidebar .nav-link:hover { background-color: #e9ecef; color: #0d6efd; }
+        .sidebar .nav-link.active { background-color: #0d6efd; color: #fff; }
+        .sidebar .nav-link i { margin-right: 1rem; width: 20px; }
+        .sidebar .logout-link { margin-top: auto; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+
+        /* Card Styles */
+        .card { border: none; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); height: 100%; }
+        .kpi-card { text-align: center; }
+        .kpi-title { font-size: 0.9rem; color: #6c757d; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 600; }
+        .kpi-value { font-size: 2.5rem; font-weight: 700; color: #0d6efd; }
+        .kpi-sub-stats { display: flex; justify-content: space-around; margin-top: 1rem; font-size: 0.9rem; }
+        .kpi-sub-stats span { font-weight: 600; }
+        .text-positive { color: #198754; }
+        .text-negative { color: #dc3545; }
+        .text-neutral { color: #6c757d; }
+        .chart-container { min-height: 300px; }
+        #comment-feed { max-height: 120vh; overflow-y: auto; padding-right: 15px; }
+        .comment-card {
+            background-color: #fff; padding: 1.5rem; margin-bottom: 1rem;
+            border-left: 5px solid #ced4da;
+        }
+        .comment-card.Positive { border-left-color: #198754; }
+        .comment-card.Negative { border-left-color: #dc3545; }
+        .comment-card.Neutral { border-left-color: #6c757d; }
+        .comment-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .comment-user { font-weight: 600; }
+        .comment-org { font-size: 0.9rem; color: #6c757d; }
+        .comment-badges { display: flex; gap: 0.5rem; }
+        .sentiment-badge { font-size: 0.75rem; font-weight: 600; }
+        .suggestion-badge { background-color: #ffc107 !important; color: #000 !important; }
+        .absa-results { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef; }
+        .absa-title { font-size: 0.8rem; font-weight: 600; color: #6c757d; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .absa-tag { cursor: pointer; transition: background-color 0.2s; }
+        .absa-tag:hover { opacity: 0.8; }
+        .list-group-item.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h1 class="logo">PIE</h1>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="dashboard.html"><i data-feather="home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="analyze.html"><i data-feather="upload-cloud"></i> New Analysis</a></li>
+            <li class="nav-item"><a class="nav-link" href="#"><i data-feather="user"></i> Profile</a></li>
+            <li class="nav-item"><a class="nav-link" href="#"><i data-feather="settings"></i> Settings</a></li>
+        </ul>
+        <div class="logout-link">
+             <ul class="nav flex-column"><li class="nav-item"><a class="nav-link" href="login.html"><i data-feather="log-out"></i> Logout</a></li></ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+             <h2 class="h3">Analysis Results: <span class="text-primary fw-bold">Public Notice June 2025</span></h2>
+             <a href="dashboard.html" class="btn btn-outline-primary"><i data-feather="arrow-left" class="me-2"></i>Back to Dashboard</a>
+        </div>
+
+        <!-- Dashboard content starts here, same as the previous prototype -->
+        <div id="dashboard-content">
+            <!-- Row 1: KPI Cards -->
+            <div class="row g-4 mb-4">
+                 <div class="col-xl-4 col-md-6"><div class="card kpi-card"><div class="card-body"><h5 class="kpi-title">Total Comments</h5><p class="kpi-value" id="total-comments">0</p><div class="kpi-sub-stats"><div><span class="text-positive" id="positive-count">0</span> Positive</div><div><span class="text-negative" id="negative-count">0</span> Negative</div><div><span class="text-neutral" id="neutral-count">0</span> Neutral</div></div></div></div></div>
+                 <div class="col-xl-4 col-md-6"><div class="card kpi-card"><div class="card-body"><h5 class="kpi-title">💡 Suggestions Found</h5><p class="kpi-value" id="suggestions-found">0</p><div class="kpi-sub-stats">High-quality recommendations</div></div></div></div>
+                 <div class="col-xl-4 col-md-6"><div class="card kpi-card"><div class="card-body"><h5 class="kpi-title">Coordinated Campaigns</h5><p class="kpi-value" id="campaigns-detected">0</p><div class="kpi-sub-stats">Near-duplicate clusters found</div></div></div></div>
+            </div>
+            <!-- Row 2: Charts -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-5"><div class="card"><div class="card-body"><h5 class="card-title">Overall Sentiment Distribution</h5><div class="chart-container"><canvas id="sentiment-pie-chart"></canvas></div></div></div></div>
+                <div class="col-lg-7"><div class="card"><div class="card-body"><h5 class="card-title">Sentiment Trends Over Time</h5><div class="chart-container"><canvas id="temporal-line-chart"></canvas></div></div></div></div>
+            </div>
+            <!-- Row 3: Word Cloud & Filters -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-7"><div class="card"><div class="card-body"><h5 class="card-title">Interactive Keyword Cloud</h5><p class="card-subtitle mb-2 text-muted small">Click a word to filter comments</p><div id="wordCloud" style="height: 300px; width: 100%;"></div></div></div></div>
+                <div class="col-lg-5"><div class="card"><div class="card-body"><h5 class="card-title">Filter & Explore</h5><div class="mb-3"><label class="form-label fw-bold">By Sentiment</label><div class="btn-group w-100" role="group" id="sentiment-filter"><button type="button" class="btn btn-outline-primary active" data-filter="All">All</button><button type="button" class="btn btn-outline-success" data-filter="Positive">Positive</button><button type="button" class="btn btn-outline-danger" data-filter="Negative">Negative</button><button type="button" class="btn btn-outline-secondary" data-filter="Neutral">Neutral</button></div></div><div class="mb-3"><label class="form-label fw-bold">By Content</label><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="suggestion-filter"><label class="form-check-label" for="suggestion-filter">Show Only Suggestions 💡</label></div></div><div><label for="stakeholder-filter" class="form-label fw-bold">By Stakeholder Role</label><select class="form-select" id="stakeholder-filter"><option selected value="All">All Stakeholders</option></select></div></div></div></div>
+            </div>
+            <!-- Row 4: Placeholders -->
+            <div class="row g-4 mb-4">
+                <div class="col-12"><div class="card"><div class="card-body text-center text-muted"><h5 class="card-title">Conversational Q&A Engine</h5><p>This area will contain the interactive chat module to "talk to your data".</p></div></div></div>
+            </div>
+            <!-- Row 5: Comment Feed -->
+            <div class="row mt-4"><div class="col-12 d-flex justify-content-between align-items-center"><h3 class="h4">Detailed Feedback Analysis</h3><p class="text-muted mb-0"><span id="filtered-comment-count">0</span> of 160 comments shown</p></div></div><hr/>
+            <div class="row g-4">
+                <div class="col-lg-4"><div class="card"><div class="card-body"><h5 class="card-title">Thematic Summaries</h5><p class="card-subtitle mb-2 text-muted small">Click a clause to see its summary and filter comments.</p><div class="list-group" id="thematic-summaries"></div></div></div></div>
+                <div class="col-lg-8"><div id="comment-feed"></div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal fade" id="aspectModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="aspectModalTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="aspectModalBody"></div></div></div></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jasondavies/d3-cloud@v1.2.7/build/d3.layout.cloud.js"></script>
+    
+    <script>
+        // ===================================================================================
+        // MOCK DATA - PASTE YOUR FULL JSON OBJECT HERE
+        // This is the placeholder for the data from your backend.
+        // I have pre-filled it with the sample you provided.
+        // ===================================================================================
+        const mockData = {
+            "overviewStats": { "totalComments": 160, "sentimentDistribution": { "Positive": 55, "Negative": 58, "Neutral": 47 }, "suggestionsFound": 44, "campaignsDetected": 2 },
+            "wordCloudData": [ { "text": "Rule 11(2)", "value": 98 }, { "text": "exemption", "value": 90 }, { "text": "risk", "value": 85 }, { "text": "IFSCA", "value": 82 }, { "text": "amendment", "value": 78 }, { "text": "companies", "value": 75 }, { "text": "financial", "value": 72 }, { "text": "business", "value": 68 }, { "text": "oversight", "value": 65 }, { "text": "stability", "value": 60 } ],
+            "parsedDocument": { "Rule 11(2)": "In the Companies (Meetings of Board and its Powers) Rules, 2014, in rule 11, in sub-rule (2) - (a) for the words 'shall include', the words, brackets and number 'shall include - (i)', shall be substituted; (b) after the words 'ordinary course of its business', the words, brackets and number 'and (ii) with regard to a Finance Company...' shall be inserted.", "Rule 11(2)(a)": "for the words 'shall include', the words, brackets and number 'shall include - (i)', shall be substituted;", "Rule 11(2)(b)": "after the words 'ordinary course of its business', the words, brackets and number 'and (ii) with regard to a Finance Company registered with the International Financial Services Centres Authority...' shall be inserted." },
+            "thematicSummaries": { "Rule 11(2)": "Feedback on Rule 11(2) is highly polarized. Supporters view it as a crucial step for the ease of doing business in the IFSC, while critics express significant concern over systemic risks from reduced RBI oversight.", "Rule 11(2)(b)": "Comments on this sub-clause primarily focus on a need for clearer definitions of terms like 'Finance Company' and 'lending activities' to prevent legal ambiguity and potential litigation." },
+            "temporalData": { "labels": ["Oct 1", "Oct 5", "Oct 8", "Oct 12", "Oct 15", "Oct 18", "Oct 22", "Oct 25", "Oct 28", "Oct 31"], "positive": [3, 2, 0, 1, 1, 2, 1, 6, 21, 18], "negative": [2, 1, 1, 2, 0, 3, 1, 9, 21, 18], "neutral": [4, 1, 1, 2, 1, 0, 2, 4, 1, 31], "suggestions": [3, 0, 1, 1, 0, 1, 0, 4, 1, 22] },
+            "comments": [ {"CommentID":1001,"UserID":"USER_482","Timestamp":"2025-10-01 09:12","CommentText":"This is a much-needed amendment for IFSCA companies. It creates a level playing field and boosts the ease of doing business. We are in full support.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Aarav Singh","UserRole":"Professional","OrganizationName":"Fintech Association of India","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false}, {"CommentID":1002,"UserID":"USER_731","Timestamp":"2025-10-01 09:25","CommentText":"Excellent clarification regarding Rule 11(2). This will benefit many NBFCs and is a positive step forward.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"In agreement","UserName":"Aditi Sharma","UserRole":"Director/Designated Partner","OrganizationName":"ABC Capital Pvt. Ltd.","single_value":"Positive","multi_value":"{\"Rule 11(2)\": \"Positive\"}","suggestion":false}, {"CommentID":1003,"UserID":"USER_239","Timestamp":"2025-10-01 09:33","CommentText":"I have serious concerns about Rule 11(2). The risk profiles of IFSCA 'Finance Companies' are not identical to RBI-regulated NBFCs. This blanket exemption could create a regulatory loophole.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest removal of the chapter/section","UserName":"Vikram Patel","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Rule 11(2)\": \"Negative\", \"Risk\": \"Negative\"}","suggestion":false}, {"CommentID":1004,"UserID":"USER_556","Timestamp":"2025-10-01 09:48","CommentText":"While we agree with the principle behind Rule 11(2), the phrasing is unclear. The Ministry should clearly define 'activity of lending' to avoid future litigation.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Priya Reddy","UserRole":"Professional","OrganizationName":"AZB & Partners","single_value":"Neutral","multi_value":"{\"Rule 11(2)\": \"Neutral\"}","suggestion":true}, {"CommentID":1005,"UserID":"USER_812","Timestamp":"2025-10-01 10:01","CommentText":"This entire proposal seems designed to benefit only a small subset of large corporations and is detrimental to smaller, domestic NBFCs.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Rohan Gupta","UserRole":"Student","OrganizationName":"IIM Bangalore","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false}, {"CommentID":1006,"UserID":"USER_111","Timestamp":"2025-10-01 10:15","CommentText":"We request clarification on the applicability of Rule 11(2)(b) to foreign subsidiaries. The language is currently ambiguous.","DocumentID":"Public-Notice-June-2025","SectionID":"Rule 11(2)(b)","CommentCategory":"Suggest modification in the chapter/section","UserName":"Ananya Joshi","UserRole":"Professional Staff Member","OrganizationName":"Shardul Amarchand Mangaldas & Co","single_value":"Neutral","multi_value":"{\"Rule 11(2)(b)\": \"Neutral\"}","suggestion":true}, {"CommentID":1007,"UserID":"USER_642","Timestamp":"2025-10-01 10:29","CommentText":"A commendable and forward-thinking initiative by the Ministry. The economic benefits for the IFSC are clear.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"In agreement","UserName":"Siddharth Kumar","UserRole":"Company/LLP","OrganizationName":"XYZ Investments LLP","single_value":"Positive","multi_value":"{\"Document Level\": \"Positive\"}","suggestion":false}, {"CommentID":1008,"UserID":"USER_305","Timestamp":"2025-10-01 10:43","CommentText":"The justification provided in the notice is weak and unconvincing. The potential for misuse of this exemption is alarmingly high.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest removal of the chapter/section","UserName":"Neha Desai","UserRole":"Individual","OrganizationName":"","single_value":"Negative","multi_value":"{\"Document Level\": \"Negative\"}","suggestion":false}, {"CommentID":1009,"UserID":"USER_921","Timestamp":"2025-10-01 10:58","CommentText":"Instead of a blanket exemption, a better approach would be to introduce a phased rollout for IFSCA companies, subject to an annual review by a joint committee of MCA and RBI.","DocumentID":"Public-Notice-June-2025","SectionID":"Document Level","CommentCategory":"Suggest modification in the chapter/section","UserName":"Arjun Mehta","UserRole":"Researcher","OrganizationName":"NIPFP","single_value":"Neutral","multi_value":"{\"IFSCA\": \"Neutral\"}","suggestion":true}]
+        };
+
+        // --- ALL THE LOGIC FROM THE PREVIOUS PROTOTYPE GOES HERE ---
+        // This includes global state, event listeners, and all rendering/filtering functions.
+        // It's self-contained and will work once you paste the full mockData.comments array above.
+        let currentFilters = { sentiment: 'All', suggestion: false, stakeholder: 'All', wordCloud: null, thematic: null };
+        let masterComments = mockData.comments;
+        let pieChart, lineChart;
+        const aspectModal = new bootstrap.Modal(document.getElementById('aspectModal'));
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDashboard();
+            document.getElementById('sentiment-filter').addEventListener('click', handleSentimentFilter);
+            document.getElementById('suggestion-filter').addEventListener('change', handleSuggestionFilter);
+            document.getElementById('stakeholder-filter').addEventListener('change', handleStakeholderFilter);
+        });
+        function initializeDashboard() {
+            populateStakeholderFilter();
+            renderOverviewKPIs();
+            renderSentimentPieChart();
+            renderTemporalLineChart();
+            renderWordCloud();
+            renderThematicSummaries();
+            filterAndRenderComments();
+        }
+        function populateStakeholderFilter() {
+            const stakeholderFilter = document.getElementById('stakeholder-filter');
+            const roles = [...new Set(masterComments.map(c => c.UserRole))];
+            roles.sort().forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                stakeholderFilter.appendChild(option);
+            });
+        }
+        function renderOverviewKPIs() {
+            const stats = mockData.overviewStats;
+            document.getElementById('total-comments').textContent = stats.totalComments;
+            document.getElementById('positive-count').textContent = stats.sentimentDistribution.Positive;
+            document.getElementById('negative-count').textContent = stats.sentimentDistribution.Negative;
+            document.getElementById('neutral-count').textContent = stats.sentimentDistribution.Neutral;
+            document.getElementById('suggestions-found').textContent = stats.suggestionsFound;
+            document.getElementById('campaigns-detected').textContent = stats.campaignsDetected;
+        }
+        function renderSentimentPieChart() {
+            const ctx = document.getElementById('sentiment-pie-chart').getContext('2d');
+            pieChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Positive', 'Negative', 'Neutral'], datasets: [{ data: [ mockData.overviewStats.sentimentDistribution.Positive, mockData.overviewStats.sentimentDistribution.Negative, mockData.overviewStats.sentimentDistribution.Neutral ], backgroundColor: ['#198754', '#dc3545', '#6c757d'], borderColor: '#fff', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }, } } });
+        }
+        function renderTemporalLineChart() {
+            const ctx = document.getElementById('temporal-line-chart').getContext('2d');
+            lineChart = new Chart(ctx, { type: 'line', data: { labels: mockData.temporalData.labels, datasets: [ { label: 'Positive', data: mockData.temporalData.positive, borderColor: '#198754', backgroundColor: 'rgba(25, 135, 84, 0.1)', fill: true, tension: 0.4 }, { label: 'Negative', data: mockData.temporalData.negative, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.4 }, { label: 'Neutral', data: mockData.temporalData.neutral, borderColor: '#6c757d', backgroundColor: 'rgba(108, 117, 125, 0.1)', fill: true, tension: 0.4 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Number of Comments'} } }, plugins: { legend: { position: 'top' }, } } });
+        }
+        function renderWordCloud() {
+            const words = mockData.wordCloudData;
+            const container = document.getElementById('wordCloud');
+            const width = container.clientWidth;
+            const height = 300;
+            const fontScale = d3.scaleSqrt().domain([0, d3.max(words, d => d.value)]).range([14, 60]);
+            const layout = d3.layout.cloud().size([width, height]).words(words.map(d => ({text: d.text, size: fontScale(d.value)}))).padding(5).rotate(() => (Math.random() > 0.5) ? 0 : 90).fontSize(d => d.size).on("end", draw);
+            layout.start();
+            function draw(words) {
+                d3.select("#wordCloud").html("");
+                d3.select("#wordCloud").append("svg").attr("width", layout.size()[0]).attr("height", layout.size()[1]).append("g").attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")").selectAll("text").data(words).enter().append("text").style("font-size", d => d.size + "px").style("font-family", "Inter").style("fill", (d, i) => d3.schemeCategory10[i % 10]).attr("text-anchor", "middle").attr("transform", d => `translate(${d.x},${d.y})rotate(${d.rotate})`).text(d => d.text).style("cursor", "pointer").on("click", (event, d) => handleWordCloudFilter(d.text));
+            }
+        }
+        function renderThematicSummaries() {
+            const container = document.getElementById('thematic-summaries');
+            container.innerHTML = '';
+            const allItem = document.createElement('a');
+            allItem.href = "#";
+            allItem.className = 'list-group-item list-group-item-action active';
+            allItem.dataset.filter = 'All';
+            allItem.innerHTML = `<h6 class="mb-1">All Topics</h6>`;
+            allItem.addEventListener('click', (e) => handleThematicFilter(e.currentTarget));
+            container.appendChild(allItem);
+            Object.entries(mockData.thematicSummaries).forEach(([aspect, summary]) => {
+                const item = document.createElement('a');
+                item.href = "#";
+                item.className = 'list-group-item list-group-item-action';
+                item.dataset.filter = aspect;
+                item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${aspect}</h6></div><p class="mb-1 small">${summary}</p>`;
+                item.addEventListener('click', (e) => handleThematicFilter(e.currentTarget));
+                container.appendChild(item);
+            });
+        }
+        function renderCommentCards(commentsToRender) {
+            const feed = document.getElementById('comment-feed');
+            feed.innerHTML = '';
+            document.getElementById('filtered-comment-count').textContent = commentsToRender.length;
+            if (commentsToRender.length === 0) {
+                feed.innerHTML = '<div class="text-center text-muted mt-5"><p>No comments match the current filters.</p></div>';
+                return;
+            }
+            commentsToRender.forEach(comment => {
+                const card = document.createElement('div');
+                card.className = `comment-card card ${comment.single_value}`;
+                let badgesHTML = `<span class="badge rounded-pill text-bg-${comment.single_value === 'Positive' ? 'success' : comment.single_value === 'Negative' ? 'danger' : 'secondary'} sentiment-badge">${comment.single_value}</span>`;
+                if (comment.suggestion) { badgesHTML += `<span class="badge rounded-pill suggestion-badge sentiment-badge">💡 Suggestion</span>`; }
+                let absaHTML = '';
+                const absaData = JSON.parse(comment.multi_value);
+                Object.entries(absaData).forEach(([aspect, aspectSentiment]) => {
+                    const aspectSentClass = aspectSentiment.toLowerCase();
+                    absaHTML += `<span class="badge rounded-pill text-bg-${aspectSentClass === 'positive' ? 'success' : aspectSentClass === 'negative' ? 'danger' : 'secondary'} me-1 absa-tag" data-aspect="${aspect}">${aspect}</span>`;
+                });
+                card.innerHTML = `<div class="comment-header"><div><div class="comment-user">${comment.UserName}</div><div class="comment-org">${comment.OrganizationName || 'Individual'}</div></div><div class="comment-badges">${badgesHTML}</div></div><p class="text-muted"><em>"${comment.CommentText.substring(0, 150)}..."</em></p><div class="absa-results"><div class="absa-title">Clause-Level Sentiment</div>${absaHTML}</div>`;
+                feed.appendChild(card);
+            });
+            feed.querySelectorAll('.absa-tag').forEach(tag => {
+                tag.addEventListener('click', () => showAspectModal(tag.dataset.aspect));
+            });
+        }
+        function showAspectModal(aspectKey) {
+            const aspectText = mockData.parsedDocument[aspectKey] || "No detailed text available. This is a keyword-based aspect.";
+            document.getElementById('aspectModalTitle').textContent = `Official Text: ${aspectKey}`;
+            document.getElementById('aspectModalBody').textContent = aspectText;
+            aspectModal.show();
+        }
+        function handleSentimentFilter(e) { if (e.target.tagName === 'BUTTON') { document.querySelectorAll('#sentiment-filter button').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); currentFilters.sentiment = e.target.dataset.filter; filterAndRenderComments(); } }
+        function handleSuggestionFilter(e) { currentFilters.suggestion = e.target.checked; filterAndRenderComments(); }
+        function handleStakeholderFilter(e) { currentFilters.stakeholder = e.target.value; filterAndRenderComments(); }
+        function handleWordCloudFilter(word) {
+            alert(`Filtering for comments containing: "${word}"`);
+            currentFilters.wordCloud = word; 
+            filterAndRenderComments();
+            currentFilters.wordCloud = null;
+        }
+        function handleThematicFilter(element) {
+            event.preventDefault(); // Corrected reference to event
+            document.querySelectorAll('#thematic-summaries a').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            currentFilters.thematic = element.dataset.filter;
+            filterAndRenderComments();
+        }
+        function filterAndRenderComments() {
+            let filteredComments = [...masterComments];
+            if (currentFilters.sentiment !== 'All') { filteredComments = filteredComments.filter(c => c.single_value === currentFilters.sentiment); }
+            if (currentFilters.suggestion) { filteredComments = filteredComments.filter(c => c.suggestion); }
+            if(currentFilters.stakeholder !== 'All') { filteredComments = filteredComments.filter(c => c.UserRole === currentFilters.stakeholder); }
+            if(currentFilters.wordCloud) { filteredComments = filteredComments.filter(c => c.CommentText.toLowerCase().includes(currentFilters.wordCloud.toLowerCase())); }
+            if (currentFilters.thematic && currentFilters.thematic !== 'All') { filteredComments = filteredComments.filter(c => { const aspects = Object.keys(JSON.parse(c.multi_value)); return aspects.includes(currentFilters.thematic) || c.SectionID === currentFilters.thematic; }); }
+            renderCommentCards(filteredComments);
+        }
+        // Activate Feather Icons
+        feather.replace();
+    </script>
+</body>
+</html>

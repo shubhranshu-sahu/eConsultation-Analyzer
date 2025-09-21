@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Public Insight Engine</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Feather Icons for a modern look -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar .logo { font-size: 1.8rem; font-weight: 700; color: #0d6efd; text-align: center; margin-bottom: 2rem; }
+        .sidebar .nav-link {
+            color: #495057;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .sidebar .nav-link:hover { background-color: #e9ecef; color: #0d6efd; }
+        .sidebar .nav-link.active { background-color: #0d6efd; color: #fff; }
+        .sidebar .nav-link i { margin-right: 1rem; width: 20px; }
+        .sidebar .logout-link { margin-top: auto; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+        .status-badge { font-size: 0.8rem; font-weight: 600; }
+        .job-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .job-card a { text-decoration: none; color: inherit; }
+    </style>
+</head>
+<body>
+    <!-- Collapsible Sidebar -->
+    <div class="sidebar">
+        <h1 class="logo">PIE</h1>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="dashboard.html"><i data-feather="home"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="analyze.html"><i data-feather="upload-cloud"></i> New Analysis</a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link" href="#"><i data-feather="user"></i> Profile</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#"><i data-feather="settings"></i> Settings</a>
+            </li>
+        </ul>
+        <div class="logout-link">
+             <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="login.html"><i data-feather="log-out"></i> Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3">Analysis Dashboard</h2>
+            <a href="analyze.html" class="btn btn-primary"><i data-feather="plus" class="me-2"></i>Start New Analysis</a>
+        </div>
+
+        <p class="text-muted mb-4">
+            View the status of your ongoing and completed analysis jobs. Click a completed job to view the detailed insights.
+        </p>
+
+        <!-- Analysis Jobs Section -->
+        <div class="row g-4">
+            <!-- Example of a Completed Job Card - THIS IS THE CLICKABLE ONE -->
+            <div class="col-lg-4 col-md-6">
+                 <div class="card h-100 job-card">
+                    <a href="analysis_results.html">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="card-title mb-0">Public Notice June 2025</h5>
+                                <span class="badge rounded-pill text-bg-success status-badge">Completed</span>
+                            </div>
+                            <p class="card-subtitle mb-3 text-muted small">Companies (Meetings of Board) Rules</p>
+                            <p class="card-text small">
+                                <strong>Comments:</strong> 160 <br>
+                                <strong>Date Submitted:</strong> 2025-09-22 <br>
+                                <strong>Status:</strong> Analysis complete. Click to view dashboard.
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Example of a Processing Job Card -->
+            <div class="col-lg-4 col-md-6">
+                 <div class="card h-100 job-card bg-light">
+                     <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">Draft Telecom Bill 2025</h5>
+                            <span class="badge rounded-pill text-bg-info status-badge">Processing</span>
+                        </div>
+                        <p class="card-subtitle mb-3 text-muted small">Department of Telecommunications</p>
+                        <div class="d-flex align-items-center">
+                             <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                             <p class="card-text small mb-0">
+                                <strong>Status:</strong> Running analysis... (75% complete)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example of a Queued Job Card -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 job-card bg-light">
+                     <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">National Policy on VCF</h5>
+                            <span class="badge rounded-pill text-bg-secondary status-badge">In Queue</span>
+                        </div>
+                         <p class="card-subtitle mb-3 text-muted small">Value Capture Finance Policy</p>
+                         <p class="card-text small">
+                            <strong>Status:</strong> Your job has been added to the queue and will be processed shortly.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Activate Feather Icons
+        feather.replace();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
